@@ -1,36 +1,127 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AutomationForge
+
+A home automation code generator, script fixer, and parts sourcing platform. Describe what you want to automate and get working code for **Shelly**, **Home Assistant**, **Node-RED**, and **ESPHome** — plus a parts list with one-click purchasing.
+
+**Live:** [automationforge.vercel.app](https://automationforge.vercel.app)
+
+---
+
+## What it does
+
+| Feature | Description |
+|---------|-------------|
+| **Build Wizard** | Describe your goal → get working code for 4 platforms |
+| **Script Fixer** | Paste broken automation code → get fixes and explanations |
+| **30+ Build Sheets** | Pre-built automation guides with code, parts lists, and safety notes |
+| **Script Library** | Searchable collection of ready-to-use automation scripts |
+| **Parts Lists** | Every guide links to recommended hardware on Amazon |
+| **Buy All Button** | One click adds all parts to your Amazon cart |
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router, TypeScript)
+- **Database:** PostgreSQL (Neon via Vercel)
+- **ORM:** Prisma 7 with PrismaPg adapter
+- **Hosting:** Vercel (auto-deploy from GitHub)
+- **Design:** Custom CSS — zinc/teal editorial palette, no UI frameworks
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── build/              # Build wizard (code generator)
+│   ├── fix/                # Script fixer tool
+│   ├── scripts/            # Script library
+│   ├── build-sheets/       # 30+ automation guides (ISR)
+│   ├── products/[tag]/     # Product pages by capability
+│   └── api/
+│       ├── build/          # Code generation API
+│       ├── fix/            # Script fixing API
+│       ├── products/       # Product lookup API
+│       └── events/         # Analytics tracking
+├── components/
+│   ├── BuyAllButton.tsx    # Amazon multi-cart button
+│   ├── ProductCard.tsx     # Product display card
+│   ├── PlatformTabs.tsx    # Code viewer with platform tabs
+│   ├── CodeBlock.tsx       # Syntax-highlighted code
+│   └── Navbar.tsx / Footer.tsx
+├── lib/
+│   ├── engine/             # Code generation engine
+│   │   ├── spec-builder.ts # Automation spec from user input
+│   │   ├── renderer-shelly.ts
+│   │   ├── renderer-ha.ts
+│   │   ├── renderer-nodered.ts
+│   │   └── renderer-esphome.ts
+│   ├── db.ts               # Prisma client
+│   └── queries.ts          # Database queries
+prisma/
+├── schema.prisma           # Database schema
+└── seed.ts                 # 15 products, 10 scripts, 30 build sheets
+```
+
+## Supported Platforms
+
+| Platform | Output |
+|----------|--------|
+| **Shelly** | Gen2 JavaScript scripts for Shelly devices |
+| **Home Assistant** | YAML automations for HA |
+| **Node-RED** | JSON flow definitions |
+| **ESPHome** | YAML device configurations for ESP32 |
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL database (or use SQLite for local dev)
+
+### Setup
 
 ```bash
+# Install dependencies
+npm install
+
+# Set up environment
+cp .env.example .env
+# Add your DATABASE_URL
+
+# Generate Prisma client
+npx prisma generate
+
+# Push schema to database
+npx prisma db push
+
+# Seed the database
+npx tsx prisma/seed.ts
+
+# Start dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Description |
+|----------|-------------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `NEXT_PUBLIC_SITE_URL` | Site URL (for SEO/sitemap) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Monetization
 
-## Learn More
+- **Amazon Associates** — affiliate links on all product recommendations
+- **Buy All Button** — multi-item cart URL with affiliate tag
+- **AdSense** — ad slots on build sheet pages (placeholder)
 
-To learn more about Next.js, take a look at the following resources:
+Every product link uses the Associate ID `automforge20-20`. All affiliate relationships are disclosed on-page per Amazon's requirements.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## SEO
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 30+ statically generated build sheet pages with ISR
+- 20+ product tag pages
+- JSON-LD structured data
+- Auto-generated sitemap and robots.txt
+- Descriptive meta titles and descriptions on every page
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private — All rights reserved.
