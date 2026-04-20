@@ -1,12 +1,15 @@
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { PrismaClient } = require('../src/generated/prisma/client');
+import { PrismaClient } from '../src/generated/prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { renderShelly } from '../src/lib/engine/renderer-shelly';
 import { renderHA } from '../src/lib/engine/renderer-ha';
 import { renderNodeRed } from '../src/lib/engine/renderer-nodered';
 import { renderESPHome } from '../src/lib/engine/renderer-esphome';
 import { buildSpecFromWizard } from '../src/lib/engine/spec-builder';
 
-const db = new PrismaClient();
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const db = new PrismaClient({ adapter });
 
 // ── 30 Build Sheet definitions ────────────────────────────────────────────────
 
