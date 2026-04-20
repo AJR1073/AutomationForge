@@ -1,0 +1,127 @@
+// AutomationForge — Prisma Schema
+// Provider: SQLite (dev) — swap to postgresql for production
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ── Automation Pages (programmatic SEO) ─────────────────────────────────────
+
+model AutomationPage {
+  id             Int      @id @default(autoincrement())
+  slug           String   @unique
+  title          String
+  summary        String
+  category       String
+  primaryIntent  String
+  seoTitle       String
+  seoDescription String
+  status         String   @default("published") // published | draft
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  specs AutomationSpec[]
+
+  @@index([category])
+  @@index([status])
+}
+
+// ── Automation Specs (canonical JSON) ────────────────────────────────────────
+
+model AutomationSpec {
+  id        Int      @id @default(autoincrement())
+  pageId    Int
+  specJson  String   // JSON string of AutomationSpec
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+
+  page    AutomationPage    @relation(fields: [pageId], references: [id])
+  outputs RenderedOutput[]
+}
+
+// ── Rendered Code Outputs ─────────────────────────────────────────────────────
+
+model RenderedOutput {
+  id           Int      @id @default(autoincrement())
+  specId       Int
+  platform     String   // shelly | ha | nodered | esphome
+  codeText     String
+  metadataJson String   @default("{}")
+  checksum     String   @default("")
+  createdAt    DateTime @default(now())
+
+  spec AutomationSpec @relation(fields: [specId], references: [id])
+
+  @@unique([specId, platform])
+}
+
+// ── Scripts Library ───────────────────────────────────────────────────────────
+
+model Script {
+  id          Int      @id @default(autoincrement())
+  platform    String   // shelly | ha | nodered | esphome
+  title       String
+  description String
+  codeText    String
+  tags        String   @default("[]") // JSON array string
+  testedNotes String   @default("")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([platform])
+}
+
+// ── Products & Affiliate Links ────────────────────────────────────────────────
+
+model Product {
+  id             Int      @id @default(autoincrement())
+  name           String
+  brand          String
+  capabilityTags String   @default("[]") // JSON array string
+  imageUrl       String   @default("")
+  priceHint      String   @default("")
+  asin           String   @default("")   // Amazon ASIN for multi-cart URL
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  affiliateLinks AffiliateLink[]
+}
+
+model AffiliateLink {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  network   String   // amazon | ebay | direct
+  url       String
+  country   String   @default("US")
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+
+model PageView {
+  id        Int      @id @default(autoincrement())
+  slug      String
+  referrer  String   @default("")
+  userAgent String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([slug])
+}
+
+model Event {
+  id           Int      @id @default(autoincrement())
+  eventType    String   // copy_code | outbound_click | generate_success | fix_success
+  slug         String   @default("")
+  metadataJson String   @default("{}")
+  createdAt    DateTime @default(now())
+
+  @@index([eventType])
+  @@index([slug])
+}

@@ -1,0 +1,144 @@
+PRD — Home Automation Script Helper
+
+Working name: AutomationForge (rename anytime)
+Goal: A public, SEO-friendly website that generates and fixes working automation code for multiple ecosystems (Shelly, Home Assistant, Node-RED, ESPHome), and monetizes via Google AdSense + affiliate “build sheets” + optional paid upgrades.
+
+1) Problem
+
+Home automation users waste time:
+
+stitching together examples across forums/docs,
+debugging YAML/JSON/JS edge-cases,
+figuring out what hardware is compatible.
+
+They want copy-paste-deploy code and a clear “what do I need to buy to make this work” list.
+
+2) Target users
+DIY Home Automator: wants an automation to “just work”
+Home Assistant power user: wants proper YAML, entities, conditions, and troubleshooting
+Node-RED builder: wants importable flows that run now
+ESPHome tinkerer: wants ready YAML snippets + pin/sensor notes
+Installer/consultant: wants faster delivery + reusable templates
+3) Core value proposition
+Describe the automation → outputs AutomationSpec + platform-specific code (Shelly/HA/Node-RED/ESPHome)
+Paste code/config → detects platform → fixes → explains changes → returns deployable result
+Build Sheet for every automation → parts list + alternatives + links (affiliate) + safety notes
+4) MVP scope
+Pages
+/ Home (search, categories, featured build sheets)
+/build Wizard → generates AutomationSpec + 4 outputs
+/fix Paste-to-fix (Shelly JS / HA YAML / Node-RED JSON / ESPHome YAML)
+/scripts Library (filters: platform, device, goal)
+/build-sheets/[slug] Programmatic SEO pages (the main traffic engine)
+/products/[tag] Category pages (“motion sensors”, “relays”, “zigbee coordinators”)
+Outputs (All platforms)
+Shelly Script (JS) + deployment steps (Gen2 Script component/RPC concept)
+Home Assistant automations YAML
+Node-RED flow JSON export/import
+ESPHome YAML snippets/config patterns
+AutomationSpec (internal canonical format)
+intent, assumptions, devices[], triggers[], conditions[], actions[]
+safety_notes[]
+parts_list[] (capability tags + quantities)
+render_targets[] (shelly/ha/node_red/esphome)
+
+Renderers convert AutomationSpec → each platform’s output.
+
+5) Non-goals (for MVP)
+No live device control from the site (no LAN scans, no remote commands)
+No paid accounts required (optional later)
+No marketplace/community submissions until quality + moderation exists
+6) Architecture
+
+Frontend: Next.js (App Router) + TS + Tailwind
+Backend: Next.js API routes (or separate Node service later)
+Database: Managed Postgres (not Supabase). Good options:
+
+Neon (serverless Postgres), Railway Postgres, AWS RDS, DigitalOcean Managed PG
+Caching: Redis later (Upstash) for hot pages
+LLM: OpenAI (or multi-provider) with strict schema/structured output pattern
+Search: Postgres full-text search first; vector search later if needed
+7) Database schema (Postgres, relational-first)
+
+Core tables:
+
+automation_pages (slug, title, summary, category, primary_intent, status, seo fields)
+automation_specs (page_id, spec_json, version, created_at)
+rendered_outputs (spec_id, platform, code_text, metadata_json, checksum)
+scripts (platform, title, description, code, tags[], tested_notes)
+products (name, brand, capability_tags[], price_hint, image_url, active)
+affiliate_links (product_id, network, url, country, updated_at)
+page_views (slug, referrer, ua, created_at)
+events (conversion events: outbound_click, copy_code, generate_success, fix_success)
+
+Optional later:
+
+users, saved_projects, project_versions, device_profiles
+8) SEO requirements (must-have)
+Programmatic pages: /build-sheets/[slug] (30 to start, then scale)
+Sitemap.xml auto-generated; robots.txt
+JSON-LD:
+HowTo (steps + tools)
+FAQPage (common errors)
+Internal linking loops: build sheet ↔ scripts ↔ product tags ↔ categories
+Performance: ISR/SSG for build sheets; avoid heavy client bundles
+9) Monetization
+A) Google AdSense (primary passive)
+Place ads on:
+build-sheets pages (best traffic)
+scripts library pages
+troubleshooting articles
+Keep /build and /fix lighter on ads to preserve tool UX (higher retention)
+B) Affiliate “Build Sheets” (high-converting)
+Every build sheet outputs:
+Required / Nice-to-have / Alternatives
+capability-tag driven product picks
+You can start with Amazon, then add direct brand programs later.
+C) Additional ways to make money (recommended)
+Pro tier subscription ($9–$19/mo):
+save projects + version history
+“my devices” profiles
+private script vault
+Paid template packs:
+“30 Best Security Automations Pack”
+“Energy Monitoring Pack”
+Lead gen for installers/consultants:
+“Need help installing this?” → referral network
+Sponsored placements (only after traffic):
+“Featured device” in product tags
+Community marketplace later:
+vetted user-submitted scripts (rev share)
+10) Compliance & trust
+Clear AdSense labeling and ad placement policy adherence
+Clear affiliate disclosures (FTC expects clear disclosures)
+Safety disclaimers for mains wiring
+“We don’t store your pasted code unless you explicitly save”
+Add Andrej Karpathy “4 principles” to the project (as a repo rulebook)
+
+Create a file in your repo root: AGENT_RULES.md (or CLAUDE.md) containing:
+
+Think Before Coding
+Simplicity First
+Surgical Changes
+Goal-Driven Execution
+
+Use it as the standing instruction for Antigravity runs: the agent must plan first, keep changes minimal, and define “done” with verifiable checks.
+
+Add these 3 “skills” to the project + PRD
+
+In your repo, create: /skills/README.md listing + linking the three skills and when to use them:
+
+Frontend design skill: https://claude.com/plugins/frontend-design
+ (and the skill definition exists on GitHub)
+Playwright skill: https://claude.com/plugins/playwright
+ (use for E2E verification)
+MCP builder skill: https://github.com/anthropics/skills/tree/main/skills/mcp-builder
+ (use when you later add external tools/connectors)
+
+Also add a PRD section: “Agent Skills & QA”:
+
+Frontend-design → ensures UI isn’t generic and is conversion-friendly
+Playwright → auto-tests core flows: generate, fix, copy, outbound clicks
+MCP-builder → future: add tool integrations (device docs fetch, parts catalog sync, etc.)
+
+(Anthropic’s general “Agent Skills” concept is described here.)

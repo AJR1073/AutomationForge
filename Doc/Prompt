@@ -1,0 +1,73 @@
+You are my senior engineer. Build an SEO-focused web app called “AutomationForge” that helps users generate and fix home automation code.
+
+STACK
+- Next.js (App Router) + TypeScript + Tailwind
+- Database: Managed Postgres (NOT Supabase). Use Neon or Railway Postgres and the `pg` library (or Prisma) for access.
+- Do NOT require accounts for MVP. Guests can use the tool fully.
+
+CORE FEATURES
+1) /build (Wizard)
+   - Collect: automation goal, device types, constraints
+   - Output: a canonical AutomationSpec JSON (internal) AND render outputs for:
+     a) Shelly Script (JS)
+     b) Home Assistant automation YAML
+     c) Node-RED flow JSON (importable)
+     d) ESPHome YAML snippet/config
+   - Show results in tabs: Shelly | HA | Node-RED | ESPHome | Explanation | Build Sheet
+
+2) /fix (Paste-to-fix)
+   - User pastes code/config; detect platform (Shelly JS / HA YAML / Node-RED JSON / ESPHome YAML)
+   - Return corrected code + explanation of what changed
+   - Add basic validation (JSON parse, YAML parse) and show friendly errors
+
+3) /scripts
+   - Searchable library of sample scripts/snippets with tags
+
+4) /build-sheets/[slug] (Programmatic SEO)
+   - Generate 30 initial slugs (high-intent automations)
+   - Each page includes: problem, steps, code outputs tabs, troubleshooting, and Build Sheet
+   - Add internal linking to /products/[tag] pages
+
+MONETIZATION
+- Add Google AdSense placeholders/components on build-sheet pages + scripts pages (NOT heavy ads on /build and /fix)
+- Add affiliate module support (no network assumptions yet): product cards driven by DB tables (products, affiliate_links)
+
+DATABASE (Postgres)
+Create migrations / schema for:
+- automation_pages (slug, title, summary, category, seo_title, seo_desc, status)
+- automation_specs (page_id, spec_json, version)
+- rendered_outputs (spec_id, platform, code_text, metadata_json)
+- scripts (platform, title, description, code_text, tags)
+- products (name, brand, capability_tags, image_url, active)
+- affiliate_links (product_id, network, url, country)
+- page_views + events (copy_code, outbound_click, generate_success, fix_success)
+
+SEO REQUIREMENTS
+- sitemap.xml generated from automation_pages
+- robots.txt
+- JSON-LD on build sheets (HowTo + FAQPage)
+- fast performance (SSG/ISR for build sheets)
+
+AGENT RULES (Karpathy)
+- Think Before Coding
+- Simplicity First
+- Surgical Changes
+- Goal-Driven Execution
+Implement these as AGENT_RULES.md in repo root and follow them during development.
+
+ADDITIONAL SKILLS TO NOTE IN REPO
+Create /skills/README.md listing:
+- frontend-design skill (for UI quality)
+- playwright skill (for end-to-end tests)
+- mcp-builder skill (future tool integrations)
+
+SAFETY
+- Do not run destructive terminal commands without asking.
+- Never print secrets. Keep them in .env.local and document required env vars.
+
+DELIVERABLES
+- Working Next.js repo
+- DB schema/migrations
+- Seed data for 30 build-sheet slugs + a few scripts + sample products
+- Minimal but polished UI
+- Basic Playwright tests for /build and /fix happy paths
