@@ -322,21 +322,21 @@ Timer.set(30000, true, function() {
 // ── Sample Products ───────────────────────────────────────────────────────────
 
 const PRODUCTS = [
-  { name: 'Shelly 1 Gen3', brand: 'Shelly', tags: ['relay', 'switch'], price: '$12', asin: 'B0CQ16SJ9R', affiliate: 'https://www.amazon.com/dp/B0CQ16SJ9R?tag=automforge-20' },
-  { name: 'Shelly Plug S Gen3', brand: 'Shelly', tags: ['smart_plug', 'energy_monitor'], price: '$18', asin: 'B0D2K21VJD', affiliate: 'https://www.amazon.com/dp/B0D2K21VJD?tag=automforge-20' },
-  { name: 'Shelly 1PM Plus', brand: 'Shelly', tags: ['relay', 'energy_monitor'], price: '$16', asin: 'B0BKR3M5MB', affiliate: 'https://www.amazon.com/dp/B0BKR3M5MB?tag=automforge-20' },
-  { name: 'Shelly Dimmer 2', brand: 'Shelly', tags: ['dimmer', 'light'], price: '$22', asin: 'B09QKCRV13', affiliate: 'https://www.amazon.com/dp/B09QKCRV13?tag=automforge-20' },
-  { name: 'Aqara Motion Sensor P1', brand: 'Aqara', tags: ['motion_sensor', 'zigbee'], price: '$18', asin: 'B09QKVMMTB', affiliate: 'https://www.amazon.com/dp/B09QKVMMTB?tag=automforge-20' },
-  { name: 'Sonoff ZBDONGLE-P Zigbee Coordinator', brand: 'Sonoff', tags: ['zigbee_coordinator'], price: '$20', asin: 'B09KXTCMSC', affiliate: 'https://www.amazon.com/dp/B09KXTCMSC?tag=automforge-20' },
-  { name: 'ESP32 Development Board', brand: 'Espressif', tags: ['controller', 'esphome'], price: '$8', asin: 'B0B19KRJN6', affiliate: 'https://www.amazon.com/dp/B0B19KRJN6?tag=automforge-20' },
-  { name: 'DHT22 Temperature Sensor', brand: 'Generic', tags: ['temperature_sensor', 'humidity_sensor'], price: '$5', asin: 'B0795F19W6', affiliate: 'https://www.amazon.com/dp/B0795F19W6?tag=automforge-20' },
-  { name: 'DS18B20 Waterproof Temp Sensor', brand: 'Generic', tags: ['temperature_sensor', 'waterproof'], price: '$6', asin: 'B012C597T0', affiliate: 'https://www.amazon.com/dp/B012C597T0?tag=automforge-20' },
-  { name: 'Magnetic Door/Window Sensor', brand: 'Aqara', tags: ['door_sensor', 'zigbee'], price: '$15', asin: 'B07D37VDM3', affiliate: 'https://www.amazon.com/dp/B07D37VDM3?tag=automforge-20' },
-  { name: 'GOVEE Water Leak Sensor', brand: 'Govee', tags: ['leak_sensor', 'wifi'], price: '$20', asin: 'B07PLLSJPG', affiliate: 'https://www.amazon.com/dp/B07PLLSJPG?tag=automforge-20' },
-  { name: 'Raspberry Pi 4 (2GB)', brand: 'Raspberry Pi', tags: ['controller', 'ha_server'], price: '$50', asin: 'B07TD42S27', affiliate: 'https://www.amazon.com/dp/B07TD42S27?tag=automforge-20' },
-  { name: 'WLED LED Strip Controller', brand: 'WLED', tags: ['light', 'led_strip', 'esphome'], price: '$15', asin: 'B0B6GP2G8C', affiliate: 'https://www.amazon.com/dp/B0B6GP2G8C?tag=automforge-20' },
-  { name: 'PIR Motion Sensor HC-SR501', brand: 'Generic', tags: ['motion_sensor', 'pir'], price: '$3', asin: 'B07KBWVJMP', affiliate: 'https://www.amazon.com/dp/B07KBWVJMP?tag=automforge-20' },
-  { name: 'Zigbee Smart Plug (Ikea Tradfri)', brand: 'IKEA', tags: ['smart_plug', 'zigbee', 'energy_monitor'], price: '$12', asin: 'B09FX3876P', affiliate: 'https://www.amazon.com/dp/B09FX3876P?tag=automforge-20' },
+  { name: 'Shelly 1 Gen3', brand: 'Shelly', tags: ['relay', 'switch'], price: '$12', asin: 'B0CQ16SJ9R', affiliate: 'https://www.amazon.com/dp/B0CQ16SJ9R?tag=automforge20-20' },
+  { name: 'Shelly Plug S Gen3', brand: 'Shelly', tags: ['smart_plug', 'energy_monitor'], price: '$18', asin: 'B0D2K21VJD', affiliate: 'https://www.amazon.com/dp/B0D2K21VJD?tag=automforge20-20' },
+  { name: 'Shelly 1PM Plus', brand: 'Shelly', tags: ['relay', 'energy_monitor'], price: '$16', asin: 'B0BKR3M5MB', affiliate: 'https://www.amazon.com/dp/B0BKR3M5MB?tag=automforge20-20' },
+  { name: 'Shelly Dimmer 2', brand: 'Shelly', tags: ['dimmer', 'light'], price: '$22', asin: 'B09QKCRV13', affiliate: 'https://www.amazon.com/dp/B09QKCRV13?tag=automforge20-20' },
+  { name: 'Aqara Motion Sensor P1', brand: 'Aqara', tags: ['motion_sensor', 'zigbee'], price: '$18', asin: 'B09QKVMMTB', affiliate: 'https://www.amazon.com/dp/B09QKVMMTB?tag=automforge20-20' },
+  { name: 'Sonoff ZBDONGLE-P Zigbee Coordinator', brand: 'Sonoff', tags: ['zigbee_coordinator'], price: '$20', asin: 'B09KXTCMSC', affiliate: 'https://www.amazon.com/dp/B09KXTCMSC?tag=automforge20-20' },
+  { name: 'ESP32 Development Board', brand: 'Espressif', tags: ['controller', 'esphome'], price: '$8', asin: 'B0B19KRJN6', affiliate: 'https://www.amazon.com/dp/B0B19KRJN6?tag=automforge20-20' },
+  { name: 'DHT22 Temperature Sensor', brand: 'Generic', tags: ['temperature_sensor', 'humidity_sensor'], price: '$5', asin: 'B0795F19W6', affiliate: 'https://www.amazon.com/dp/B0795F19W6?tag=automforge20-20' },
+  { name: 'DS18B20 Waterproof Temp Sensor', brand: 'Generic', tags: ['temperature_sensor', 'waterproof'], price: '$6', asin: 'B012C597T0', affiliate: 'https://www.amazon.com/dp/B012C597T0?tag=automforge20-20' },
+  { name: 'Magnetic Door/Window Sensor', brand: 'Aqara', tags: ['door_sensor', 'zigbee'], price: '$15', asin: 'B07D37VDM3', affiliate: 'https://www.amazon.com/dp/B07D37VDM3?tag=automforge20-20' },
+  { name: 'GOVEE Water Leak Sensor', brand: 'Govee', tags: ['leak_sensor', 'wifi'], price: '$20', asin: 'B07PLLSJPG', affiliate: 'https://www.amazon.com/dp/B07PLLSJPG?tag=automforge20-20' },
+  { name: 'Raspberry Pi 4 (2GB)', brand: 'Raspberry Pi', tags: ['controller', 'ha_server'], price: '$50', asin: 'B07TD42S27', affiliate: 'https://www.amazon.com/dp/B07TD42S27?tag=automforge20-20' },
+  { name: 'WLED LED Strip Controller', brand: 'WLED', tags: ['light', 'led_strip', 'esphome'], price: '$15', asin: 'B0B6GP2G8C', affiliate: 'https://www.amazon.com/dp/B0B6GP2G8C?tag=automforge20-20' },
+  { name: 'PIR Motion Sensor HC-SR501', brand: 'Generic', tags: ['motion_sensor', 'pir'], price: '$3', asin: 'B07KBWVJMP', affiliate: 'https://www.amazon.com/dp/B07KBWVJMP?tag=automforge20-20' },
+  { name: 'Zigbee Smart Plug (Ikea Tradfri)', brand: 'IKEA', tags: ['smart_plug', 'zigbee', 'energy_monitor'], price: '$12', asin: 'B09FX3876P', affiliate: 'https://www.amazon.com/dp/B09FX3876P?tag=automforge20-20' },
 ];
 
 async function main() {

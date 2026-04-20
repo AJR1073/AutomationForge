@@ -9,7 +9,7 @@ interface BuyAllButtonProps {
   affiliateTag?: string;
 }
 
-export default function BuyAllButton({ products, affiliateTag = 'automforge-20' }: BuyAllButtonProps) {
+export default function BuyAllButton({ products, affiliateTag = 'automforge20-20' }: BuyAllButtonProps) {
   const productsWithAsin = products.filter((p) => p.asin);
 
   if (productsWithAsin.length === 0) return null;
