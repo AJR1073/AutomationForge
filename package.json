@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint",
     "seed": "node scripts/seed.js",
@@ -14,7 +15,6 @@
   },
   "dependencies": {
     "@libsql/client": "^0.17.2",
-    "@prisma/adapter-libsql": "^7.7.0",
     "@prisma/adapter-pg": "^7.7.0",
     "dotenv": "^17.4.2",
     "next": "16.2.4",
@@ -31,7 +31,6 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "better-sqlite3": "^12.9.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.4",
     "prisma": "^7.7.0",
