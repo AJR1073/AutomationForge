@@ -11,6 +11,14 @@ const PLATFORM_LABELS: Record<string, string> = {
   unknown: 'Unknown',
 };
 
+const PLATFORM_COLORS: Record<string, string> = {
+  shelly: 'bg-amber-500/15 border-amber-500/30 text-amber-400',
+  ha: 'bg-cyan-500/15 border-cyan-500/30 text-cyan-400',
+  nodered: 'bg-orange-500/15 border-orange-500/30 text-orange-400',
+  esphome: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
+  unknown: 'bg-zinc-500/15 border-zinc-500/30 text-zinc-400',
+};
+
 const EXAMPLE_CODE: Record<string, string> = {
   shelly: `Shelly.addEventHandler(function(event {
   if (event.component === "input:0") {
@@ -36,6 +44,7 @@ interface FixResult {
   changes: string[];
   errors: string[];
   valid: boolean;
+  placeholders?: string[];
 }
 
 export default function FixPage() {
@@ -45,7 +54,7 @@ export default function FixPage() {
   const [error, setError] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Live platform detection (debounced in a simple way)
+  // Live platform detection
   const detectedPlatform = (() => {
     const trimmed = code.trim();
     if (!trimmed) return null;
@@ -77,9 +86,11 @@ export default function FixPage() {
     }
   };
 
+  const codeChanged = result && result.original !== result.fixed;
+
   return (
     <div className="min-h-screen py-12 px-6">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="mb-10">
           <h1 className="text-3xl md:text-4xl font-bold text-zinc-100 mb-3">
             Fix your automation code
@@ -89,13 +100,13 @@ export default function FixPage() {
           </p>
         </div>
 
-        <div className={`grid gap-6 ${result ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
-          {/* Input Panel */}
-          <div className="space-y-4">
+        {/* Input section — always full width */}
+        {!result && (
+          <div className="max-w-3xl mx-auto space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-slate-200 font-semibold">Paste Your Code</label>
               {detectedPlatform && (
-                <span className="text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium animate-fade-in">
+                <span className={`text-xs px-3 py-1 rounded-full border font-medium ${PLATFORM_COLORS[detectedPlatform]}`}>
                   Detected: {PLATFORM_LABELS[detectedPlatform]}
                 </span>
               )}
@@ -144,53 +155,109 @@ export default function FixPage() {
               ) : 'Fix my code'}
             </button>
           </div>
+        )}
 
-          {/* Results Panel */}
-          {result && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="flex items-center justify-between">
-                <h2 className="text-white font-semibold">Fixed Code</h2>
-                <span className={`text-xs px-3 py-1 rounded-full border ${result.valid ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}>
-                  {result.valid ? 'Valid' : 'Errors found'}
+        {/* Results — side-by-side Before / After */}
+        {result && (
+          <div className="space-y-6 animate-fade-in">
+            {/* Header with platform chip + status */}
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <span className={`text-xs px-3 py-1 rounded-full border font-medium ${PLATFORM_COLORS[result.platform]}`}>
+                  {PLATFORM_LABELS[result.platform]}
                 </span>
+                <span className={`text-xs px-3 py-1 rounded-full border ${result.valid ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-amber-500/10 border-amber-500/20 text-amber-400'}`}>
+                  {result.valid ? '✓ Valid' : '⚠ Issues found'}
+                </span>
+                {codeChanged && (
+                  <span className="text-xs px-3 py-1 rounded-full border bg-blue-500/10 border-blue-500/20 text-blue-400">
+                    {result.changes.length} fix{result.changes.length !== 1 ? 'es' : ''} applied
+                  </span>
+                )}
               </div>
+              <button
+                onClick={() => { setResult(null); }}
+                className="btn-ghost text-xs"
+              >
+                ← Fix another
+              </button>
+            </div>
 
-              <CodeBlock code={result.fixed} platform={result.platform as 'shelly' | 'ha' | 'nodered' | 'esphome'} />
-
-              {/* Errors */}
-              {result.errors.length > 0 && (
-                <div className="rounded-lg border border-zinc-800/80 bg-forge-900 p-4">
-                  <p className="text-red-400 font-semibold text-sm mb-2">Issues found</p>
-                  <ul className="space-y-1">
-                    {result.errors.map((e, i) => (
-                      <li key={i} className="text-red-300/80 text-sm flex items-start gap-2">
-                        <span className="text-red-500 mt-0.5">•</span> {e}
-                      </li>
-                    ))}
-                  </ul>
+            {/* Side-by-side diff */}
+            <div className={`grid gap-4 ${codeChanged ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+              {/* Before (only show if code changed) */}
+              {codeChanged && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-red-400/80 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    Before
+                  </h3>
+                  <div className="rounded-lg border border-red-500/10 bg-red-500/5 overflow-hidden">
+                    <CodeBlock code={result.original} platform={result.platform as 'shelly' | 'ha' | 'nodered' | 'esphome'} />
+                  </div>
                 </div>
               )}
 
-              {/* Changes made */}
-              {result.changes.length > 0 ? (
-                <div className="rounded-lg border border-zinc-800/80 bg-forge-900 p-4">
-                  <p className="text-emerald-400 font-semibold text-sm mb-2">Changes made</p>
-                  <ul className="space-y-1">
-                    {result.changes.map((c, i) => (
-                      <li key={i} className="text-emerald-300/80 text-sm flex items-start gap-2">
-                        <span className="text-emerald-500 mt-0.5">•</span> {c}
-                      </li>
-                    ))}
-                  </ul>
+              {/* After */}
+              <div className="space-y-2">
+                <h3 className="text-sm font-semibold text-emerald-400/80 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                  {codeChanged ? 'After' : 'Your Code (no changes needed)'}
+                </h3>
+                <div className={`rounded-lg border overflow-hidden ${codeChanged ? 'border-emerald-500/10 bg-emerald-500/5' : 'border-zinc-800'}`}>
+                  <CodeBlock code={result.fixed} platform={result.platform as 'shelly' | 'ha' | 'nodered' | 'esphome'} />
                 </div>
-              ) : result.valid ? (
-                <div className="rounded-lg border border-zinc-800/80 bg-forge-900 p-4">
-                  <p className="text-zinc-500 text-sm">No changes needed — your code looks valid.</p>
-                </div>
-              ) : null}
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Errors */}
+            {result.errors.length > 0 && (
+              <div className="rounded-lg border border-zinc-800/80 bg-forge-900 p-4">
+                <p className="text-red-400 font-semibold text-sm mb-2">Issues found</p>
+                <ul className="space-y-1">
+                  {result.errors.map((e, i) => (
+                    <li key={i} className="text-red-300/80 text-sm flex items-start gap-2">
+                      <span className="text-red-500 mt-0.5">•</span> {e}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Placeholders detected */}
+            {result.placeholders && result.placeholders.length > 0 && (
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
+                <p className="text-amber-400 font-semibold text-sm mb-2">⚙️ Required Inputs</p>
+                <p className="text-zinc-500 text-xs mb-2">These placeholders need to be replaced with your actual values:</p>
+                <ul className="space-y-1">
+                  {result.placeholders.map((p, i) => (
+                    <li key={i} className="text-amber-300/80 text-sm flex items-start gap-2">
+                      <span className="text-amber-500 mt-0.5">✏️</span> {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Changes made */}
+            {result.changes.length > 0 ? (
+              <div className="rounded-lg border border-zinc-800/80 bg-forge-900 p-4">
+                <p className="text-emerald-400 font-semibold text-sm mb-2">Changes made</p>
+                <ul className="space-y-1">
+                  {result.changes.map((c, i) => (
+                    <li key={i} className="text-emerald-300/80 text-sm flex items-start gap-2">
+                      <span className="text-emerald-500 mt-0.5">•</span> {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : result.valid ? (
+              <div className="rounded-lg border border-zinc-800/80 bg-forge-900 p-4">
+                <p className="text-zinc-500 text-sm">No changes needed — your code looks valid.</p>
+              </div>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );

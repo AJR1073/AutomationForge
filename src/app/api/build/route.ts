@@ -5,6 +5,9 @@ import { renderHA } from '@/lib/engine/renderer-ha';
 import { renderNodeRed } from '@/lib/engine/renderer-nodered';
 import { renderESPHome } from '@/lib/engine/renderer-esphome';
 import { WizardInput } from '@/lib/engine/types';
+import { generateAutomationSpec } from '@/lib/ai/spec-generator';
+import { validateSpec } from '@/lib/ai/schema';
+import { validateOutput } from '@/lib/engine/validators';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,13 +24,46 @@ export async function POST(req: NextRequest) {
       platforms: body.platforms || ['shelly', 'ha', 'nodered', 'esphome'],
     };
 
-    const spec = buildSpecFromWizard(input);
+    // ── Try LLM-first, fallback to heuristics ──────────────────────────────
+    let spec;
+    let source: 'llm' | 'heuristic' = 'heuristic';
 
+    try {
+      spec = await generateAutomationSpec({
+        goal: input.goal,
+        deviceTypes: input.deviceTypes,
+        constraints: input.constraints,
+        selectedPlatforms: input.platforms,
+      });
+      source = 'llm';
+      console.log('[/api/build] LLM spec generated successfully');
+    } catch (llmErr: unknown) {
+      const msg = llmErr instanceof Error ? llmErr.message : String(llmErr);
+      console.log(`[/api/build] LLM failed (${msg}), using heuristic fallback`);
+      spec = buildSpecFromWizard(input);
+    }
+
+    // ── Validate final spec ────────────────────────────────────────────────
+    const specValidation = validateSpec(spec);
+    if (!specValidation.ok) {
+      console.log('[/api/build] Spec validation failed, falling back to heuristic');
+      spec = buildSpecFromWizard(input);
+    }
+
+    // ── Render outputs ─────────────────────────────────────────────────────
     const outputs = {
       shelly: renderShelly(spec),
       ha: renderHA(spec),
       nodered: renderNodeRed(spec),
       esphome: renderESPHome(spec),
+    };
+
+    // ── Validate each output ───────────────────────────────────────────────
+    const validation = {
+      shelly: validateOutput('shelly', outputs.shelly),
+      ha: validateOutput('ha', outputs.ha),
+      nodered: validateOutput('nodered', outputs.nodered),
+      esphome: validateOutput('esphome', outputs.esphome),
     };
 
     const explanation = `
@@ -53,6 +89,8 @@ ${spec.safetyNotes.length > 0 ? `**⚠️ Safety Notes:**\n${spec.safetyNotes.ma
       spec,
       outputs,
       explanation,
+      validation,
+      source,
     });
   } catch (err: unknown) {
     console.error('[/api/build]', err);
