@@ -15,15 +15,14 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
   if (productsWithAsin.length === 0) return null;
 
   // Build Amazon multi-item cart URL
-  // Format: https://www.amazon.com/gp/aws/cart/add.html?tag=TAG&ASIN.1=xxx&Quantity.1=1&ASIN.2=yyy&Quantity.2=1
+  // Amazon requires raw URL format — URLSearchParams encodes & as %26 which breaks the cart
   const cartUrl = (() => {
-    const params = new URLSearchParams();
-    params.set('tag', affiliateTag);
+    const parts = [`tag=${affiliateTag}`];
     productsWithAsin.forEach((p, i) => {
-      params.set(`ASIN.${i + 1}`, p.asin);
-      params.set(`Quantity.${i + 1}`, '1');
+      parts.push(`ASIN.${i + 1}=${p.asin}`);
+      parts.push(`Quantity.${i + 1}=1`);
     });
-    return `https://www.amazon.com/gp/aws/cart/add.html?${params.toString()}`;
+    return `https://www.amazon.com/gp/aws/cart/add.html?${parts.join('&')}`;
   })();
 
   // Estimate total from price hints
