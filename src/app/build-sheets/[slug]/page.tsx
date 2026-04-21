@@ -60,9 +60,19 @@ export default async function BuildSheetPage({ params }: { params: Promise<{ slu
     text: `Configure your automation to ${a.type.replace(/_/g, ' ')} for ${a.target || 'the device'}.`,
   })) || [];
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://automationforge.vercel.app';
+
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: baseUrl },
+          { '@type': 'ListItem', position: 2, name: 'Build Sheets', item: `${baseUrl}/build-sheets` },
+          { '@type': 'ListItem', position: 3, name: page.title },
+        ],
+      },
       {
         '@type': 'HowTo',
         name: page.title,

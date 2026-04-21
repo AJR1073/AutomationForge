@@ -1,9 +1,10 @@
-import { getAllBuildSheetSlugs } from '@/lib/queries';
+import { getAllBuildSheetSlugs, getAllCapabilityTags } from '@/lib/queries';
 import type { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://automationforge.app';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://automationforge.vercel.app';
   const slugs = await getAllBuildSheetSlugs();
+  const tags = await getAllCapabilityTags();
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'weekly', priority: 1.0 },
@@ -20,5 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
-  return [...staticPages, ...buildSheetPages];
+  const productPages: MetadataRoute.Sitemap = tags.map((tag) => ({
+    url: `${baseUrl}/products/${tag}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.6,
+  }));
+
+  return [...staticPages, ...buildSheetPages, ...productPages];
 }
