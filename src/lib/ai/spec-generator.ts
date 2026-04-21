@@ -26,9 +26,12 @@ Rules:
 9. For notifications, use action type "notify" with a descriptive message.
 10. renderTargets must match the selectedPlatforms provided.`;
 
+const MAX_RETRIES = 2;
+
 /**
  * Generate an AutomationSpec using OpenAI's API.
- * Throws on any failure — caller must handle fallback.
+ * Retries up to MAX_RETRIES times on schema validation failure.
+ * Throws on exhausted retries, missing key, or network error — caller handles fallback.
  */
 export async function generateAutomationSpec(input: SpecGeneratorInput): Promise<AutomationSpec> {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -37,9 +40,34 @@ export async function generateAutomationSpec(input: SpecGeneratorInput): Promise
   }
 
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+  let lastError: Error = new Error('Unknown error');
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      return await attemptGeneration(input, apiKey, model, attempt);
+    } catch (err: unknown) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      // Only retry on schema validation failures — not on network/auth errors
+      const isValidationError = lastError.message.startsWith('Schema validation failed');
+      if (!isValidationError || attempt === MAX_RETRIES) {
+        throw lastError;
+      }
+      console.log(`[spec-generator] Attempt ${attempt} failed validation, retrying...`);
+    }
+  }
+
+  throw lastError;
+}
+
+async function attemptGeneration(
+  input: SpecGeneratorInput,
+  apiKey: string,
+  model: string,
+  attempt: number,
+): Promise<AutomationSpec> {
 
   const userMessage = [
-    `Automation goal: ${input.goal}`,
+    attempt > 1 ? `[Retry attempt ${attempt}] Be conservative and strictly follow the JSON schema. Automation goal: ${input.goal}` : `Automation goal: ${input.goal}`,
     input.deviceTypes?.length ? `Available devices: ${input.deviceTypes.join(', ')}` : '',
     input.constraints?.length ? `Constraints: ${input.constraints.join(', ')}` : '',
     `Target platforms: ${input.selectedPlatforms.join(', ')}`,

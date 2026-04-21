@@ -6,7 +6,6 @@ import { renderNodeRed } from '@/lib/engine/renderer-nodered';
 import { renderESPHome } from '@/lib/engine/renderer-esphome';
 import { WizardInput } from '@/lib/engine/types';
 import { generateAutomationSpec } from '@/lib/ai/spec-generator';
-import { validateSpec } from '@/lib/ai/schema';
 import { validateOutput } from '@/lib/engine/validators';
 
 export async function POST(req: NextRequest) {
@@ -24,9 +23,14 @@ export async function POST(req: NextRequest) {
       platforms: body.platforms || ['shelly', 'ha', 'nodered', 'esphome'],
     };
 
-    // ── Try LLM-first, fallback to heuristics ──────────────────────────────
+    // ── LLM-first spec generation ──────────────────────────────────────────
+    // Fallback to heuristics ONLY if:
+    //   (a) OPENAI_API_KEY is missing
+    //   (b) LLM output fails schema validation after 2 retries (handled inside generateAutomationSpec)
+    //   (c) LLM request errors or times out
+    // The heuristic spec is never merged or patched with LLM output.
     let spec;
-    let source: 'llm' | 'heuristic' = 'heuristic';
+    let source: 'llm' | 'heuristic' = 'llm';
 
     try {
       spec = await generateAutomationSpec({
@@ -35,19 +39,13 @@ export async function POST(req: NextRequest) {
         constraints: input.constraints,
         selectedPlatforms: input.platforms,
       });
-      source = 'llm';
       console.log('[/api/build] LLM spec generated successfully');
     } catch (llmErr: unknown) {
       const msg = llmErr instanceof Error ? llmErr.message : String(llmErr);
-      console.log(`[/api/build] LLM failed (${msg}), using heuristic fallback`);
+      const isMissingKey = msg.includes('OPENAI_API_KEY not configured');
+      console.log(`[/api/build] LLM failed (${isMissingKey ? 'no key' : msg.slice(0, 80)}), using heuristic fallback`);
       spec = buildSpecFromWizard(input);
-    }
-
-    // ── Validate final spec ────────────────────────────────────────────────
-    const specValidation = validateSpec(spec);
-    if (!specValidation.ok) {
-      console.log('[/api/build] Spec validation failed, falling back to heuristic');
-      spec = buildSpecFromWizard(input);
+      source = 'heuristic';
     }
 
     // ── Render outputs ─────────────────────────────────────────────────────
