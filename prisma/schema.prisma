@@ -125,3 +125,24 @@ model Event {
   @@index([eventType])
   @@index([slug])
 }
+
+// ── Helper Pages (ESPHome / MQTT guides) ──────────────────────────────────────
+
+model HelperPage {
+  id                     Int      @id @default(autoincrement())
+  slug                   String   @unique
+  title                  String
+  summary                String
+  category               String   // "esphome" | "mqtt"
+  seoTitle               String
+  seoDescription         String
+  contentJson            String   // JSON: { whenToUse, codeBlocks[], troubleshooting[], faqs[] }
+  capabilityTags         String   @default("[]")  // JSON array string
+  relatedBuildSheetSlugs String   @default("[]")  // JSON array string
+  status                 String   @default("published")
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([category])
+  @@index([status])
+}

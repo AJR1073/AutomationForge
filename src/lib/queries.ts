@@ -153,3 +153,48 @@ export async function trackEvent(
     data: { eventType, slug, metadataJson: JSON.stringify(metadata) },
   });
 }
+
+// ── Helper Page Queries ───────────────────────────────────────────────────────
+
+export async function getHelperBySlug(slug: string) {
+  return db.helperPage.findUnique({ where: { slug } });
+}
+
+export async function getAllHelperSlugs() {
+  return db.helperPage.findMany({
+    where: { status: 'published' },
+    select: { slug: true, updatedAt: true },
+    orderBy: { createdAt: 'asc' },
+  });
+}
+
+export async function getHelpersByCategory(category: string, limit?: number) {
+  return db.helperPage.findMany({
+    where: { status: 'published', category },
+    orderBy: { createdAt: 'asc' },
+    ...(limit ? { take: limit } : {}),
+  });
+}
+
+export async function getHelpersByCapabilityTags(tags: string[], limit = 6) {
+  const helpers = await db.helperPage.findMany({
+    where: { status: 'published' },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  const matched = helpers.filter((h) => {
+    const caps: string[] = JSON.parse(h.capabilityTags || '[]');
+    return tags.some((tag) => caps.includes(tag));
+  });
+
+  return matched.slice(0, limit);
+}
+
+export async function getFeaturedHelpers(limit = 6) {
+  return db.helperPage.findMany({
+    where: { status: 'published' },
+    take: limit,
+    orderBy: { createdAt: 'desc' },
+  });
+}
+

@@ -1,4 +1,5 @@
 import { PrismaClient } from '../src/generated/prisma/client';
+import { HELPER_PAGES } from './helper-seed-data';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import { renderShelly } from '../src/lib/engine/renderer-shelly';
@@ -351,6 +352,7 @@ async function main() {
   await db.renderedOutput.deleteMany();
   await db.automationSpec.deleteMany();
   await db.automationPage.deleteMany();
+  await db.helperPage.deleteMany();
 
   // Seed Products
   console.log('  → Products...');
@@ -435,10 +437,31 @@ async function main() {
     process.stdout.write('.');
   }
 
+  // Seed Helper Pages
+  console.log('\n  → Helper Pages...');
+  for (const hp of HELPER_PAGES) {
+    await db.helperPage.create({
+      data: {
+        slug: hp.slug,
+        title: hp.title,
+        summary: hp.summary,
+        category: hp.category,
+        seoTitle: hp.seoTitle,
+        seoDescription: hp.seoDescription,
+        contentJson: hp.contentJson,
+        capabilityTags: hp.capabilityTags,
+        relatedBuildSheetSlugs: hp.relatedBuildSheetSlugs,
+        status: 'published',
+      },
+    });
+    process.stdout.write('.');
+  }
+
   console.log('\n✅ Seed complete!');
   console.log(`   - ${PRODUCTS.length} products`);
   console.log(`   - ${SCRIPTS.length} scripts`);
   console.log(`   - ${BUILD_SHEETS.length} build sheets`);
+  console.log(`   - ${HELPER_PAGES.length} helper pages`);
 }
 
 main()

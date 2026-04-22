@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getBuildSheetBySlug, getAllBuildSheetSlugs, getProductsByTags } from '@/lib/queries';
+import { getBuildSheetBySlug, getAllBuildSheetSlugs, getProductsByTags, getHelpersByCapabilityTags } from '@/lib/queries';
 import PlatformTabs from '@/components/PlatformTabs';
 import ProductCard from '@/components/ProductCard';
 import BuyAllButton from '@/components/BuyAllButton';
@@ -50,7 +50,10 @@ export default async function BuildSheetPage({ params }: { params: Promise<{ slu
   const parsedSpec: AutomationSpec | null = spec ? JSON.parse(spec.specJson) : null;
 
   const capabilityTags = parsedSpec?.partsList.map((p) => p.capabilityTag) || [];
-  const products = await getProductsByTags(capabilityTags);
+  const [products, relatedHelpers] = await Promise.all([
+    getProductsByTags(capabilityTags),
+    getHelpersByCapabilityTags(capabilityTags, 4),
+  ]);
 
   // JSON-LD structured data
   const howToSteps = parsedSpec?.actions.map((a, i) => ({
@@ -268,6 +271,32 @@ export default async function BuildSheetPage({ params }: { params: Promise<{ slu
               ))}
             </div>
           </section>
+
+          {/* Helpful device guides */}
+          {relatedHelpers.length > 0 && (
+            <section className="mb-12" id="helpful-device-guides">
+              <h2 className="text-zinc-200 font-semibold text-xl mb-4">Helpful device guides</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {relatedHelpers.map((helper) => (
+                  <Link
+                    key={helper.slug}
+                    href={`/helpers/${helper.slug}`}
+                    className="group p-4 rounded-lg border border-zinc-800/80 bg-forge-900 hover:border-zinc-700 transition-colors"
+                  >
+                    <span className={`text-[0.6rem] px-1.5 py-0.5 rounded font-medium ${
+                      helper.category === 'esphome'
+                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'
+                    }`}>
+                      {helper.category.toUpperCase()}
+                    </span>
+                    <p className="text-zinc-300 text-sm font-medium mt-2 group-hover:text-teal-400 transition-colors">{helper.title}</p>
+                    <p className="text-zinc-600 text-xs mt-1 line-clamp-2">{helper.summary}</p>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Internal links */}
           <section>

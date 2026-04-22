@@ -1,6 +1,7 @@
-import { getScripts } from '@/lib/queries';
+import { getScripts, getFeaturedHelpers } from '@/lib/queries';
 import ScriptsClient from './ScriptsClient';
 import AdSlot from '@/components/AdSlot';
+import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default async function ScriptsPage() {
-  const scripts = await getScripts();
+  const [scripts, helpers] = await Promise.all([
+    getScripts(),
+    getFeaturedHelpers(4),
+  ]);
 
   return (
     <div className="min-h-screen py-12 px-6">
@@ -25,8 +29,34 @@ export default async function ScriptsPage() {
 
         <AdSlot slot="scripts-top" format="horizontal" className="mb-8" />
 
+        {/* Popular device guides */}
+        {helpers.length > 0 && (
+          <div className="mb-10 p-5 rounded-xl border border-zinc-800/80 bg-forge-900" id="popular-device-guides">
+            <h2 className="text-zinc-300 font-semibold text-sm mb-3">Popular device guides</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {helpers.map((h) => (
+                <Link
+                  key={h.slug}
+                  href={`/helpers/${h.slug}`}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/[0.03] transition-colors group"
+                >
+                  <span className={`text-[0.6rem] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${
+                    h.category === 'esphome'
+                      ? 'bg-emerald-500/10 text-emerald-400'
+                      : 'bg-cyan-500/10 text-cyan-400'
+                  }`}>
+                    {h.category.toUpperCase()}
+                  </span>
+                  <span className="text-zinc-400 text-sm group-hover:text-teal-400 transition-colors truncate">{h.title}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         <ScriptsClient scripts={scripts} />
       </div>
     </div>
   );
 }
+
