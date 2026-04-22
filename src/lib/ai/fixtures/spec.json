@@ -1,0 +1,32 @@
+{
+  "intent": "Turn on hallway lights when motion is detected at night",
+  "assumptions": [
+    "Shelly Gen2 device is installed and connected to local network",
+    "Motion sensor is wired to input:0",
+    "Home Assistant is optional but recommended for advanced scheduling"
+  ],
+  "devices": [
+    { "name": "Hallway Motion Sensor", "type": "motion_sensor", "location": "Hallway", "haEntityId": "binary_sensor.hallway_motion" },
+    { "name": "Hallway Light Relay", "type": "relay", "location": "Hallway", "shellyModel": "Shelly 1 Gen3", "haEntityId": "switch.hallway_light" }
+  ],
+  "triggers": [
+    { "type": "state", "device": "input:0", "event": "on" }
+  ],
+  "conditions": [
+    { "type": "time", "value": "20:00:00", "operator": ">=" }
+  ],
+  "actions": [
+    { "type": "turn_on", "target": "Hallway Light" },
+    { "type": "delay", "duration": 300000 },
+    { "type": "turn_off", "target": "Hallway Light" }
+  ],
+  "safetyNotes": [
+    "Ensure relay is rated for the connected light fixture wattage",
+    "Test motion sensor coverage area before relying on automation"
+  ],
+  "partsList": [
+    { "name": "Shelly 1 Gen3", "capabilityTag": "relay", "quantity": 1, "required": true, "notes": "Controls the hallway light circuit" },
+    { "name": "PIR Motion Sensor", "capabilityTag": "motion_sensor", "quantity": 1, "required": true, "notes": "Detects movement in hallway" }
+  ],
+  "renderTargets": ["shelly", "ha", "nodered", "esphome"]
+}

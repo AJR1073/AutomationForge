@@ -62,7 +62,7 @@ export default function CodeBlock({ code, language = 'text', platform, filename 
             <div className="w-3 h-3 rounded-full bg-amber-500/60" />
             <div className="w-3 h-3 rounded-full bg-emerald-500/60" />
           </div>
-          {filename && <span className="text-slate-500 text-xs">{filename}</span>}
+          {filename && <span className=" text-xs">{filename}</span>}
           <span className={`text-xs font-mono font-medium ${colorClass}`}>{langLabel.toUpperCase()}</span>
         </div>
 
@@ -71,7 +71,7 @@ export default function CodeBlock({ code, language = 'text', platform, filename 
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
             copied
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              : 'bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10 hover:text-slate-200'
+              : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:text-slate-200'
           }`}
           id={`copy-${platform || language}`}
         >
@@ -94,7 +94,7 @@ export default function CodeBlock({ code, language = 'text', platform, filename 
       </div>
 
       {/* Code */}
-      <pre className="p-5 overflow-x-auto text-sm leading-relaxed text-slate-300 font-mono whitespace-pre">
+      <pre className="p-5 overflow-x-auto text-sm leading-relaxed font-mono whitespace-pre">
         {code || '// No code generated yet'}
       </pre>
     </div>

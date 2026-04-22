@@ -145,12 +145,12 @@ export default async function HelperPage({ params }: { params: Promise<{ slug: s
       <div className="min-h-screen py-12 px-6">
         <div className="max-w-4xl mx-auto">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-xs text-zinc-600 mb-8" id="helper-breadcrumb">
-            <Link href="/" className="hover:text-zinc-400 transition-colors">Home</Link>
+          <nav className="flex items-center gap-2 text-xs mb-8" id="helper-breadcrumb" style={{ color: 'var(--text-muted)' }}>
+            <Link href="/" className="hover:opacity-70 transition-colors">Home</Link>
             <span>/</span>
-            <span className="text-zinc-500">Helpers</span>
+            <span style={{ color: "var(--text-primary)" }}>Helpers</span>
             <span>/</span>
-            <span className="text-zinc-400">{page.title}</span>
+            <span style={{ color: "var(--text-primary)" }}>{page.title}</span>
           </nav>
 
           {/* Hero */}
@@ -164,17 +164,17 @@ export default async function HelperPage({ params }: { params: Promise<{ slug: s
                 {page.category.toUpperCase()}
               </span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-zinc-100 mb-3" id="helper-title">
+            <h1 className="text-3xl md:text-4xl font-bold mb-3" id="helper-title">
               {page.title}
             </h1>
-            <p className="text-zinc-500 text-lg leading-relaxed">{page.summary}</p>
+            <p className="text-lg leading-relaxed" style={{ color: "var(--text-muted)" }}>{page.summary}</p>
           </div>
 
           {/* When to use this */}
           <section className="mb-10">
-            <h2 className="text-zinc-200 font-semibold text-xl mb-4">When to use this</h2>
-            <div className="p-5 rounded-lg bg-forge-900 border border-zinc-800/80">
-              <p className="text-zinc-400 text-sm leading-relaxed">{content.whenToUse}</p>
+            <h2 className="font-semibold text-xl mb-4">When to use this</h2>
+            <div className="p-5 rounded-lg" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-surface)' }}>
+              <p className="text-sm leading-relaxed" style={{ color: "var(--text-secondary)" }}>{content.whenToUse}</p>
             </div>
           </section>
 
@@ -183,7 +183,7 @@ export default async function HelperPage({ params }: { params: Promise<{ slug: s
 
           {/* Code blocks */}
           <section className="mb-10" id="helper-code-blocks">
-            <h2 className="text-zinc-200 font-semibold text-xl mb-5">Working config / code</h2>
+            <h2 className="font-semibold text-xl mb-5">Working config / code</h2>
             <div className="space-y-5">
               {content.codeBlocks.map((cb, i) => (
                 <CodeBlock
@@ -220,10 +220,10 @@ export default async function HelperPage({ params }: { params: Promise<{ slug: s
 
           {/* Troubleshooting */}
           <section className="mb-10" id="helper-troubleshooting">
-            <h2 className="text-zinc-200 font-semibold text-xl mb-4">Troubleshooting</h2>
+            <h2 className="font-semibold text-xl mb-4">Troubleshooting</h2>
             <ul className="space-y-2">
               {content.troubleshooting.map((tip, i) => (
-                <li key={i} className="flex items-start gap-3 text-zinc-400 text-sm">
+                <li key={i} className="flex items-start gap-3 text-sm">
                   <span className="text-teal-500 mt-0.5 flex-shrink-0">•</span>
                   {tip}
                 </li>
@@ -236,12 +236,12 @@ export default async function HelperPage({ params }: { params: Promise<{ slug: s
 
           {/* FAQ */}
           <section className="mb-10" id="helper-faqs">
-            <h2 className="text-zinc-200 font-semibold text-xl mb-5">FAQ</h2>
+            <h2 className="font-semibold text-xl mb-5">FAQ</h2>
             <div className="space-y-2">
               {content.faqs.map((faq, i) => (
-                <details key={i} className="rounded-lg border border-zinc-800/80 bg-forge-900 overflow-hidden">
-                  <summary className="px-4 py-3 cursor-pointer text-zinc-300 text-sm font-medium select-none">{faq.q}</summary>
-                  <p className="px-4 pb-3 text-zinc-500 text-sm">{faq.a}</p>
+                <details key={i} className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-default)' }}>
+                  <summary className="px-4 py-3 cursor-pointer text-sm font-medium select-none" style={{ color: 'var(--text-primary)' }}>{faq.q}</summary>
+                  <p className="px-4 pb-3 text-sm" style={{ color: 'var(--text-secondary)' }}>{faq.a}</p>
                 </details>
               ))}
             </div>
@@ -250,13 +250,14 @@ export default async function HelperPage({ params }: { params: Promise<{ slug: s
           {/* Related build sheets */}
           {relatedSlugs.length > 0 && (
             <section className="mb-10" id="helper-related-build-sheets">
-              <h2 className="text-zinc-200 font-semibold text-xl mb-4">Related build sheets</h2>
+              <h2 className="font-semibold text-xl mb-4">Related build sheets</h2>
               <div className="flex flex-wrap gap-2">
                 {relatedSlugs.map((rs) => (
                   <Link
                     key={rs}
                     href={`/build-sheets/${rs}`}
-                    className="px-3 py-2 rounded-lg border border-zinc-800/80 bg-forge-900 text-zinc-400 text-sm hover:border-zinc-700 hover:text-teal-400 transition-colors"
+                    className="px-3 py-2 rounded-lg text-sm transition-colors"
+                    style={{ border: '1px solid var(--border-default)', color: 'var(--text-primary)' }}
                   >
                     {rs.replace(/-/g, ' ')}
                   </Link>
@@ -268,12 +269,12 @@ export default async function HelperPage({ params }: { params: Promise<{ slug: s
           {/* Parts list */}
           <section className="mb-10" id="helper-parts-list">
             <div className="mb-4">
-              <h2 className="text-zinc-200 font-semibold text-xl mb-1">Parts &amp; products</h2>
-              <p className="text-zinc-600 text-sm">Recommended hardware for this guide.</p>
+              <h2 className="font-semibold text-xl mb-1">Parts &amp; products</h2>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>Recommended hardware for this guide.</p>
             </div>
 
             {/* Affiliate disclosure */}
-            <p className="text-zinc-700 text-xs mb-5">
+            <p className="text-xs mb-5" style={{ color: "var(--text-faint)" }}>
               As an Amazon Associate, AutomationForge earns from qualifying purchases. Product links are affiliate links — they cost you nothing extra.
             </p>
 

@@ -21,10 +21,10 @@ export default async function BuildSheetsIndexPage({ searchParams }: { searchPar
     <div className="min-h-screen py-12 px-6">
       <div className="max-w-5xl mx-auto">
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-zinc-100 mb-3">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">
             Build sheets
           </h1>
-          <p className="text-zinc-500 text-base">
+          <p className="text-base" style={{ color: "var(--text-muted)" }}>
             Step-by-step guides with working code, parts lists, and troubleshooting.
           </p>
         </div>
@@ -43,16 +43,16 @@ export default async function BuildSheetsIndexPage({ searchParams }: { searchPar
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pages.map((page) => (
-            <Link key={page.id} href={`/build-sheets/${page.slug}`} className="group block p-5 rounded-xl border border-zinc-800/80 bg-forge-900 hover:border-zinc-700 transition-colors">
+            <Link key={page.id} href={`/build-sheets/${page.slug}`} className="group block p-5 rounded-xl border  hover:opacity-80 transition-colors">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-xs px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 font-medium">
+                <span className="text-xs px-2 py-0.5 rounded font-medium">
                   {page.category}
                 </span>
               </div>
-              <h2 className="text-zinc-200 font-semibold text-sm mb-1.5 group-hover:text-teal-400 transition-colors">
+              <h2 className="font-semibold text-sm mb-1.5 group-hover:text-teal-400 transition-colors" style={{ color: "var(--text-primary)" }}>
                 {page.title}
               </h2>
-              <p className="text-zinc-600 text-xs line-clamp-2 leading-relaxed">{page.summary}</p>
+              <p className="text-xs line-clamp-2 leading-relaxed" style={{ color: "var(--text-muted)" }}>{page.summary}</p>
             </Link>
           ))}
         </div>

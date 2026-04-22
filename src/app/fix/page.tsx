@@ -92,10 +92,10 @@ export default function FixPage() {
     <div className="min-h-screen py-12 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-zinc-100 mb-3">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
             Fix your automation code
           </h1>
-          <p className="text-zinc-500 text-base">
+          <p className="text-base" style={{ color: 'var(--text-muted)' }}>
             Paste any Shelly JS, HA YAML, Node-RED JSON, or ESPHome YAML. We&apos;ll detect the platform and fix common errors.
           </p>
         </div>
@@ -104,7 +104,7 @@ export default function FixPage() {
         {!result && (
           <div className="max-w-3xl mx-auto space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-slate-200 font-semibold">Paste Your Code</label>
+              <label className="font-semibold" style={{ color: 'var(--text-primary)' }}>Paste Your Code</label>
               {detectedPlatform && (
                 <span className={`text-xs px-3 py-1 rounded-full border font-medium ${PLATFORM_COLORS[detectedPlatform]}`}>
                   Detected: {PLATFORM_LABELS[detectedPlatform]}
@@ -123,7 +123,7 @@ export default function FixPage() {
 
             {/* Example loads */}
             <div className="flex flex-wrap gap-2">
-              <span className="text-slate-600 text-xs self-center">Load example:</span>
+              <span className="text-xs self-center" style={{ color: 'var(--text-muted)' }}>Load example:</span>
               {Object.keys(EXAMPLE_CODE).map((p) => (
                 <button
                   key={p}
@@ -204,7 +204,7 @@ export default function FixPage() {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                   {codeChanged ? 'After' : 'Your Code (no changes needed)'}
                 </h3>
-                <div className={`rounded-lg border overflow-hidden ${codeChanged ? 'border-emerald-500/10 bg-emerald-500/5' : 'border-zinc-800'}`}>
+                <div className={`rounded-lg border overflow-hidden ${codeChanged ? 'border-emerald-500/10 bg-emerald-500/5' : ''}`} style={!codeChanged ? { borderColor: 'var(--border-default)' } : {}}>
                   <CodeBlock code={result.fixed} platform={result.platform as 'shelly' | 'ha' | 'nodered' | 'esphome'} />
                 </div>
               </div>
@@ -212,7 +212,7 @@ export default function FixPage() {
 
             {/* Errors */}
             {result.errors.length > 0 && (
-              <div className="rounded-lg border border-zinc-800/80 bg-forge-900 p-4">
+              <div className="rounded-lg p-4" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-surface)' }}>
                 <p className="text-red-400 font-semibold text-sm mb-2">Issues found</p>
                 <ul className="space-y-1">
                   {result.errors.map((e, i) => (
@@ -228,7 +228,7 @@ export default function FixPage() {
             {result.placeholders && result.placeholders.length > 0 && (
               <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
                 <p className="text-amber-400 font-semibold text-sm mb-2">⚙️ Required Inputs</p>
-                <p className="text-zinc-500 text-xs mb-2">These placeholders need to be replaced with your actual values:</p>
+                <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>These placeholders need to be replaced with your actual values:</p>
                 <ul className="space-y-1">
                   {result.placeholders.map((p, i) => (
                     <li key={i} className="text-amber-300/80 text-sm flex items-start gap-2">
@@ -241,7 +241,7 @@ export default function FixPage() {
 
             {/* Changes made */}
             {result.changes.length > 0 ? (
-              <div className="rounded-lg border border-zinc-800/80 bg-forge-900 p-4">
+              <div className="rounded-lg p-4" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-surface)' }}>
                 <p className="text-emerald-400 font-semibold text-sm mb-2">Changes made</p>
                 <ul className="space-y-1">
                   {result.changes.map((c, i) => (
@@ -252,8 +252,8 @@ export default function FixPage() {
                 </ul>
               </div>
             ) : result.valid ? (
-              <div className="rounded-lg border border-zinc-800/80 bg-forge-900 p-4">
-                <p className="text-zinc-500 text-sm">No changes needed — your code looks valid.</p>
+              <div className="rounded-lg p-4" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-surface)' }}>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No changes needed — your code looks valid.</p>
               </div>
             ) : null}
           </div>

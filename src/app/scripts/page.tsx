@@ -19,10 +19,10 @@ export default async function ScriptsPage() {
     <div className="min-h-screen py-12 px-6">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-4">
             Script <span className="gradient-text">Library</span>
           </h1>
-          <p className="text-slate-400 text-lg">
+          <p className="text-lg" style={{ color: "var(--text-muted)" }}>
             Ready-to-use snippets for all platforms. Copy, paste, deploy.
           </p>
         </div>
@@ -31,8 +31,8 @@ export default async function ScriptsPage() {
 
         {/* Popular device guides */}
         {helpers.length > 0 && (
-          <div className="mb-10 p-5 rounded-xl border border-zinc-800/80 bg-forge-900" id="popular-device-guides">
-            <h2 className="text-zinc-300 font-semibold text-sm mb-3">Popular device guides</h2>
+          <div className="mb-10 p-5 rounded-xl border " id="popular-device-guides">
+            <h2 className="font-semibold text-sm mb-3">Popular device guides</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {helpers.map((h) => (
                 <Link
@@ -47,7 +47,7 @@ export default async function ScriptsPage() {
                   }`}>
                     {h.category.toUpperCase()}
                   </span>
-                  <span className="text-zinc-400 text-sm group-hover:text-teal-400 transition-colors truncate">{h.title}</span>
+                  <span className="text-sm group-hover:text-teal-400 transition-colors truncate" style={{ color: "var(--text-primary)" }}>{h.title}</span>
                 </Link>
               ))}
             </div>

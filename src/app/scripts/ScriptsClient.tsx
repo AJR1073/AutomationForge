@@ -54,14 +54,14 @@ export default function ScriptsClient({ scripts }: { scripts: Script[] }) {
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="text-center py-20 text-slate-500">No scripts found for your filter.</div>
+        <div className="text-center py-20">No scripts found for your filter.</div>
       ) : (
         <div className="space-y-4">
           {filtered.map((script) => {
             const tags: string[] = JSON.parse(script.tags || '[]');
             const isOpen = expanded === script.id;
             return (
-              <div key={script.id} className="rounded-xl border border-zinc-800/80 bg-forge-900 overflow-hidden">
+              <div key={script.id} className="rounded-xl border  overflow-hidden">
                 {/* Card header */}
                 <button
                   className="w-full p-5 flex items-start gap-4 text-left"
@@ -71,13 +71,13 @@ export default function ScriptsClient({ scripts }: { scripts: Script[] }) {
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`badge-${script.platform}`}>{script.platform.toUpperCase()}</span>
                       {tags.slice(0, 3).map((t) => (
-                        <span key={t} className="text-xs text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">{t}</span>
+                        <span key={t} className="text-xs bg-white/5 px-2 py-0.5 rounded-full">{t}</span>
                       ))}
                     </div>
-                    <h3 className="text-white font-semibold text-base">{script.title}</h3>
-                    <p className="text-slate-500 text-sm mt-1">{script.description}</p>
+                    <h3 className="font-semibold text-base">{script.title}</h3>
+                    <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>{script.description}</p>
                   </div>
-                  <svg className={`w-5 h-5 text-slate-500 flex-shrink-0 mt-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  <svg className={`w-5 h-5 flex-shrink-0 mt-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                 </button>
 
                 {/* Expanded code */}

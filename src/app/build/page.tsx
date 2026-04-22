@@ -113,25 +113,25 @@ export default function BuildPage() {
     <div className="min-h-screen py-12 px-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-zinc-100 mb-3">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
             Build your automation
           </h1>
-          <p className="text-zinc-500 text-base">
+          <p className="text-base" style={{ color: 'var(--text-muted)' }}>
             Describe what you want — get working code for all 4 platforms.
           </p>
         </div>
 
         {!result ? (
-          <div className="rounded-xl border border-zinc-800/80 bg-forge-900 p-8">
+          <div className="rounded-xl p-8" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-surface)' }}>
             {/* Progress */}
             <div className="flex items-center gap-2 mb-8">
               {[1, 2, 3].map((s) => (
                 <div key={s} className="flex items-center gap-2">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= s ? 'bg-teal-500 text-zinc-900' : 'bg-zinc-800 text-zinc-500'}`}>{s}</div>
-                  {s < 3 && <div className={`h-px w-16 transition-all ${step > s ? 'bg-teal-500' : 'bg-zinc-800'}`} />}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${step >= s ? 'bg-teal-500' : ''}`} style={{ background: step >= s ? undefined : 'var(--bg-surface-2)', color: step >= s ? 'var(--bg-base)' : 'var(--text-muted)' }}>{s}</div>
+                  {s < 3 && <div className={`h-px w-16 transition-all ${step > s ? 'bg-teal-500' : ''}`} style={{ background: step > s ? undefined : 'var(--border-default)' }} />}
                 </div>
               ))}
-              <span className="ml-2 text-slate-500 text-sm">
+              <span className="ml-2 text-sm" style={{ color: 'var(--text-muted)' }}>
                 {step === 1 ? 'Describe your goal' : step === 2 ? 'Select devices & constraints' : 'Choose platforms'}
               </span>
             </div>
@@ -139,7 +139,7 @@ export default function BuildPage() {
             {/* Step 1: Goal */}
             {step === 1 && (
               <div className="animate-fade-in space-y-4">
-                <label className="block text-slate-200 font-semibold mb-2">What do you want to automate?</label>
+                <label className="block font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>What do you want to automate?</label>
                 <textarea
                   id="automation-goal"
                   className="forge-input min-h-[120px] resize-none"
@@ -148,10 +148,10 @@ export default function BuildPage() {
                   onChange={(e) => setGoal(e.target.value)}
                   maxLength={300}
                 />
-                <p className="text-slate-600 text-xs text-right">{goal.length}/300</p>
+                <p className="text-xs text-right" style={{ color: 'var(--text-muted)' }}>{goal.length}/300</p>
                 {/* Suggestions */}
                 <div>
-                  <p className="text-slate-500 text-xs mb-2">Quick starts:</p>
+                  <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Quick starts:</p>
                   <div className="flex flex-wrap gap-2">
                     {[
                       'Motion-activated hallway light',
@@ -175,13 +175,14 @@ export default function BuildPage() {
             {step === 2 && (
               <div className="animate-fade-in space-y-6">
                 <div>
-                  <label className="block text-slate-200 font-semibold mb-3">Which devices are involved?</label>
+                  <label className="block font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Which devices are involved?</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {DEVICE_OPTIONS.map((d) => (
                       <button
                         key={d.id}
                         onClick={() => toggleItem(selectedDevices, setSelectedDevices, d.id)}
-                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all text-left ${selectedDevices.includes(d.id) ? 'bg-teal-500/10 border-teal-500/30 text-teal-300' : 'bg-zinc-800/50 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300'}`}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all text-left ${selectedDevices.includes(d.id) ? 'bg-teal-500/10 border-teal-500/30 text-teal-600' : ''}`}
+                        style={!selectedDevices.includes(d.id) ? { background: 'var(--bg-surface-2)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' } : {}}
                       >
                         {d.label}
                       </button>
@@ -189,13 +190,14 @@ export default function BuildPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-slate-200 font-semibold mb-3">Any constraints? (optional)</label>
+                  <label className="block font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Any constraints? (optional)</label>
                   <div className="flex flex-wrap gap-2">
                     {CONSTRAINT_OPTIONS.map((c) => (
                       <button
                         key={c}
                         onClick={() => toggleItem(selectedConstraints, setSelectedConstraints, c)}
-                        className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${selectedConstraints.includes(c) ? 'bg-teal-500/10 border-teal-500/30 text-teal-300' : 'bg-zinc-800/50 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
+                        className={`px-3 py-1.5 rounded-full border text-xs font-medium transition-all ${selectedConstraints.includes(c) ? 'bg-teal-500/10 border-teal-500/30 text-teal-600' : ''}`}
+                        style={!selectedConstraints.includes(c) ? { background: 'var(--bg-surface-2)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' } : {}}
                       >
                         {c}
                       </button>
@@ -213,15 +215,16 @@ export default function BuildPage() {
             {step === 3 && (
               <div className="animate-fade-in space-y-6">
                 <div>
-                  <label className="block text-slate-200 font-semibold mb-3">Generate code for which platforms?</label>
+                  <label className="block font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Generate code for which platforms?</label>
                   <div className="grid grid-cols-2 gap-3">
                     {PLATFORM_OPTIONS.map((p) => (
                       <button
                         key={p.id}
                         onClick={() => toggleItem(selectedPlatforms, setSelectedPlatforms, p.id)}
-                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${selectedPlatforms.includes(p.id) ? 'bg-teal-500/10 border-teal-500/30 text-zinc-100' : 'bg-zinc-800/50 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition-all ${selectedPlatforms.includes(p.id) ? 'bg-teal-500/10 border-teal-500/30' : ''}`}
+                        style={selectedPlatforms.includes(p.id) ? { color: 'var(--text-primary)' } : { background: 'var(--bg-surface-2)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
                       >
-                        <span className={`w-3 h-3 rounded border ${selectedPlatforms.includes(p.id) ? 'bg-teal-500 border-teal-500' : 'border-zinc-600'}`} />
+                        <span className={`w-3 h-3 rounded border ${selectedPlatforms.includes(p.id) ? 'bg-teal-500 border-teal-500' : ''}`} style={!selectedPlatforms.includes(p.id) ? { borderColor: 'var(--border-hover)' } : {}} />
                         <span className={selectedPlatforms.includes(p.id) ? p.color : ''}>{p.label}</span>
                       </button>
                     ))}
@@ -229,10 +232,10 @@ export default function BuildPage() {
                 </div>
 
                 {/* Summary */}
-                <div className="bg-white/3 rounded-xl p-4 border border-white/5 text-sm space-y-1">
-                  <p className="text-slate-400"><span className="text-slate-300 font-medium">Goal:</span> {goal}</p>
-                  <p className="text-slate-400"><span className="text-slate-300 font-medium">Devices:</span> {selectedDevices.length ? selectedDevices.join(', ') : 'Auto-detect'}</p>
-                  {selectedConstraints.length > 0 && <p className="text-slate-400"><span className="text-slate-300 font-medium">Constraints:</span> {selectedConstraints.join(', ')}</p>}
+                <div className="rounded-xl p-4 text-sm space-y-1" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-default)' }}>
+                  <p style={{ color: 'var(--text-secondary)' }}><span className="font-medium" style={{ color: 'var(--text-primary)' }}>Goal:</span> {goal}</p>
+                  <p style={{ color: 'var(--text-secondary)' }}><span className="font-medium" style={{ color: 'var(--text-primary)' }}>Devices:</span> {selectedDevices.length ? selectedDevices.join(', ') : 'Auto-detect'}</p>
+                  {selectedConstraints.length > 0 && <p style={{ color: 'var(--text-secondary)' }}><span className="font-medium" style={{ color: 'var(--text-primary)' }}>Constraints:</span> {selectedConstraints.join(', ')}</p>}
                 </div>
 
                 {error && <p className="text-red-400 text-sm text-center">{error}</p>}
@@ -261,8 +264,8 @@ export default function BuildPage() {
           <div className="space-y-6 animate-fade-in">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-white font-bold text-xl">Your Automation Code</h2>
-                <p className="text-slate-500 text-sm mt-1">&ldquo;{goal}&rdquo;</p>
+                <h2 className="font-bold text-xl" style={{ color: 'var(--text-primary)' }}>Your Automation Code</h2>
+                <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>&ldquo;{goal}&rdquo;</p>
               </div>
               <button className="btn-ghost" onClick={() => { setResult(null); setStep(1); }}>
                 ← Start Over
@@ -273,8 +276,8 @@ export default function BuildPage() {
             <PlatformTabs tabs={tabs.filter((t) => t.id !== 'buildsheet')} />
 
             {/* Build Sheet */}
-            <div className="rounded-xl border border-zinc-800/80 bg-forge-900 p-6">
-              <h3 className="text-zinc-200 font-semibold text-base mb-4">Parts list</h3>
+            <div className="rounded-xl p-6" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-surface)' }}>
+              <h3 className="font-semibold text-base mb-4" style={{ color: 'var(--text-primary)' }}>Parts list</h3>
               {result.spec.safetyNotes.length > 0 && (
                 <div className="mb-4 p-4 rounded-lg bg-amber-500/5 border border-amber-500/10">
                   <p className="text-amber-400 font-semibold text-sm mb-2">Safety notes</p>
@@ -287,13 +290,13 @@ export default function BuildPage() {
                 {result.spec.partsList.map((part, i) => {
                   const product = productMap[part.capabilityTag];
                   return (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-zinc-800/40 border border-zinc-800">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${part.required ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-default)' }}>
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${part.required ? 'bg-emerald-400' : ''}`} style={!part.required ? { background: 'var(--border-hover)' } : {}} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-zinc-200 text-sm font-medium">{part.name}</p>
-                        <p className="text-zinc-500 text-xs">
+                        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{part.name}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                           Qty: {part.quantity} · {part.required ? 'Required' : 'Optional'}
-                          {product && <span className="text-zinc-600"> · {product.priceHint}</span>}
+                          {product && <span style={{ color: 'var(--text-faint)' }}> · {product.priceHint}</span>}
                         </p>
                       </div>
                       {product?.affiliateUrl && (
@@ -301,7 +304,8 @@ export default function BuildPage() {
                           href={product.affiliateUrl}
                           target="_blank"
                           rel="noopener noreferrer nofollow"
-                          className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-zinc-700/60 hover:bg-zinc-700 text-xs text-teal-400 hover:text-teal-300 font-medium transition-colors flex-shrink-0"
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors flex-shrink-0"
+                          style={{ background: 'var(--accent-muted)', color: 'var(--accent)', border: '1px solid var(--accent-border)' }}
                           onClick={() => {
                             fetch('/api/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventType: 'affiliate_click', metadata: { product: product.name } }) }).catch(() => {});
                           }}
@@ -325,7 +329,7 @@ export default function BuildPage() {
                   .filter((p): p is { name: string; asin: string; priceHint: string } => p !== null)}
               />
 
-              <p className="text-zinc-700 text-xs mt-4">
+              <p className="text-xs mt-4" style={{ color: 'var(--text-faint)' }}>
                 As an Amazon Associate, AutomationForge earns from qualifying purchases. Links are affiliate links — they cost you nothing extra.
               </p>
             </div>

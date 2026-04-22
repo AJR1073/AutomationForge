@@ -22,21 +22,28 @@ const footerLinks = {
 
 export default function Footer() {
   return (
-    <footer className="border-t border-[rgba(139,92,246,0.1)] mt-20 py-12">
+    <footer style={{ borderTop: '1px solid var(--border-default)' }} className="mt-20 py-12">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-md bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white font-bold text-xs">
+              <div
+                className="w-7 h-7 rounded-md flex items-center justify-center font-bold text-xs"
+                style={{
+                  background: 'var(--accent-muted)',
+                  border: '1px solid var(--accent-border)',
+                  color: 'var(--accent)',
+                }}
+              >
                 AF
               </div>
-              <span className="font-bold text-white">AutomationForge</span>
+              <span className="font-bold" style={{ color: 'var(--text-primary)' }}>AutomationForge</span>
             </div>
-            <p className="text-slate-500 text-sm leading-relaxed">
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
               Generate and fix home automation code for Shelly, Home Assistant, Node-RED, and ESPHome. Free forever.
             </p>
-            <p className="text-slate-600 text-xs mt-4">
+            <p className="text-xs mt-4" style={{ color: 'var(--text-faint)' }}>
               * Affiliate links help keep this site free. Prices and availability may vary.
             </p>
           </div>
@@ -44,13 +51,14 @@ export default function Footer() {
           {/* Link columns */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h4 className="text-slate-300 font-semibold text-sm mb-3">{category}</h4>
+              <h4 className="font-semibold text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>{category}</h4>
               <ul className="space-y-2">
                 {links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-slate-500 hover:text-slate-300 text-sm transition-colors"
+                      className="text-sm transition-colors hover:underline"
+                      style={{ color: 'var(--text-muted)' }}
                     >
                       {link.label}
                     </Link>
@@ -61,11 +69,11 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="border-t border-[rgba(255,255,255,0.05)] pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
-          <p className="text-slate-600 text-sm">
+        <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-3" style={{ borderTop: '1px solid var(--divider)' }}>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
             © {new Date().getFullYear()} AutomationForge. Open to use, never requires an account.
           </p>
-          <p className="text-slate-700 text-xs">
+          <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
             Safety disclaimers apply for mains wiring. We do not store your pasted code unless you save it.
           </p>
         </div>

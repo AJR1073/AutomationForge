@@ -68,13 +68,13 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
           <p className="text-teal-400 font-semibold text-sm group-hover:text-teal-300 transition-colors">
             Shop all {productsWithAsin.length} parts on Amazon
           </p>
-          <p className="text-zinc-600 text-xs">
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
             Find every component for this build
-            {totalEstimate > 0 && <span className="text-zinc-500"> · ~${totalEstimate} est.</span>}
+            {totalEstimate > 0 && <span className="" style={{ color: "var(--text-muted)" }}> · ~${totalEstimate} est.</span>}
           </p>
         </div>
         {/* Arrow */}
-        <svg className="w-4 h-4 text-zinc-600 group-hover:text-teal-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="w-4 h-4 group-hover:text-teal-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
         </svg>
       </a>
@@ -87,7 +87,7 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
             href={p.searchUrl}
             target="_blank"
             rel="noopener noreferrer nofollow"
-            className="text-[11px] text-zinc-600 hover:text-teal-400 transition-colors px-2 py-0.5 rounded border border-zinc-800/50 hover:border-teal-500/30"
+            className="text-[11px] hover:text-teal-400 transition-colors px-2 py-0.5 rounded border/50 hover:border-teal-500/30"
             title={`Find ${p.name} on Amazon`}
           >
             {p.name.split(/\s+/).slice(0, 3).join(' ')}

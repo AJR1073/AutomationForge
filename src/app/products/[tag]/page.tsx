@@ -29,24 +29,24 @@ export default async function ProductTagPage({ params }: { params: Promise<{ tag
   return (
     <div className="min-h-screen py-12 px-6">
       <div className="max-w-5xl mx-auto">
-        <nav className="flex items-center gap-2 text-xs text-zinc-600 mb-8">
-          <Link href="/" className="hover:text-zinc-400">Home</Link>
+        <nav className="flex items-center gap-2 text-xs mb-8">
+          <Link href="/" className="hover:opacity-70">Home</Link>
           <span>/</span>
-          <span className="text-zinc-500">Products</span>
+          <span className="" style={{ color: "var(--text-primary)" }}>Products</span>
           <span>/</span>
-          <span className="text-zinc-400">{label}</span>
+          <span className="" style={{ color: "var(--text-primary)" }}>{label}</span>
         </nav>
 
         <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-zinc-100 mb-3">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">
             Best <span className="text-teal-400">{label}</span> for home automation
           </h1>
-          <p className="text-zinc-500 text-base">
+          <p className="text-base" style={{ color: "var(--text-muted)" }}>
             Compatible with Shelly, Home Assistant, Node-RED, and ESPHome.
           </p>
         </div>
 
-        <p className="text-zinc-700 text-xs mb-6">
+        <p className="text-xs mb-6" style={{ color: "var(--text-faint)" }}>
           As an Amazon Associate, AutomationForge earns from qualifying purchases. Links are affiliate links — they cost you nothing extra.
         </p>
 
@@ -78,8 +78,8 @@ export default async function ProductTagPage({ params }: { params: Promise<{ tag
           />
         </div>
 
-        <div className="rounded-xl border border-zinc-800/80 bg-forge-900 p-6 text-center">
-          <p className="text-zinc-500 text-sm mb-4">Need a complete automation using {label}?</p>
+        <div className="rounded-xl border  p-6 text-center">
+          <p className="text-sm mb-4" style={{ color: "var(--text-muted)" }}>Need a complete automation using {label}?</p>
           <Link href="/build" className="btn-primary">Build automation with {label}<svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg></Link>
         </div>
       </div>
