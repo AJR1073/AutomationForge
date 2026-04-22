@@ -6,9 +6,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   workers: 1,
+  timeout: 60000,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:3003',
+    baseURL: process.env.TEST_BASE_URL || 'http://localhost:3003',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
