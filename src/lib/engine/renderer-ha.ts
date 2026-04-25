@@ -1,5 +1,33 @@
 import { AutomationSpec } from './types';
 
+function slugifyEntityPart(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    || 'your_device';
+}
+
+function entityId(domain: string, value: string): string {
+  if (/^[a-z_]+\.[a-z0-9_]+$/.test(value)) return value;
+  return `${domain}.${slugifyEntityPart(value)}`;
+}
+
+function actionTarget(target?: string) {
+  const raw = target || 'your_device';
+  const lower = raw.toLowerCase();
+  if (lower.includes('garage') || lower.includes('gate')) {
+    return {
+      service: lower.includes('close') ? 'cover.close_cover' : 'cover.open_cover',
+      entity: entityId('cover', raw),
+    };
+  }
+  if (lower.includes('relay') || lower.includes('switch') || lower.includes('plug')) {
+    return { service: 'homeassistant.turn_on', entity: entityId('switch', raw) };
+  }
+  return { service: 'homeassistant.turn_on', entity: entityId('light', raw) };
+}
+
 /**
  * Renders an AutomationSpec as Home Assistant automation YAML
  */
@@ -13,28 +41,28 @@ export function renderHA(spec: AutomationSpec): string {
   const triggerYaml = triggers
     .map((t) => {
       if (t.type === 'state') {
-        const entityId = t.device
-          ? devices.find((d) => d.name === t.device)?.haEntityId || `binary_sensor.${t.device?.toLowerCase().replace(/\s+/g, '_')}`
+        const haEntity = t.device
+          ? devices.find((d) => d.name === t.device)?.haEntityId || entityIdForTrigger(t.device)
           : 'binary_sensor.your_sensor';
-        return `  - platform: state
-    entity_id: ${entityId}
-    to: "${t.event || 'on'}"`;
+        return `      - platform: state
+        entity_id: ${haEntity}
+        to: "${t.event || 'on'}"`;
       }
       if (t.type === 'time') {
-        return `  - platform: time
-    at: "${t.at || '08:00:00'}"`;
+        return `      - platform: time
+        at: "${t.at || '08:00:00'}"`;
       }
       if (t.type === 'numeric_state') {
-        const entityId = t.device
-          ? `sensor.${t.device.toLowerCase().replace(/\s+/g, '_')}`
+        const haEntity = t.device
+          ? entityId('sensor', t.device)
           : 'sensor.your_sensor';
-        return `  - platform: numeric_state
-    entity_id: ${entityId}
-    above: ${t.value || 0}`;
+        return `      - platform: numeric_state
+        entity_id: ${haEntity}
+        above: ${t.value || 0}`;
       }
-      return `  - platform: state
-    entity_id: sensor.your_sensor
-    to: "on"`;
+      return `      - platform: state
+        entity_id: sensor.your_sensor
+        to: "on"`;
     })
     .join('\n\n');
 
@@ -42,25 +70,25 @@ export function renderHA(spec: AutomationSpec): string {
     ? conditions
         .map((c) => {
           if (c.type === 'time') {
-            return `  - condition: time
-    after: "${c.value || '08:00:00'}"
-    before: "22:00:00"`;
+            return `      - condition: time
+        after: "${c.value || '08:00:00'}"
+        before: "22:00:00"`;
           }
           if (c.type === 'state') {
-            return `  - condition: state
-    entity_id: input_boolean.your_flag
-    state: "${c.value || 'on'}"`;
+            return `      - condition: state
+        entity_id: ${c.device ? entityId('input_boolean', c.device) : 'input_boolean.your_flag'}
+        state: "${c.value || 'on'}"`;
           }
           if (c.type === 'numeric_state') {
-            const entityId = c.device
-              ? `sensor.${c.device.toLowerCase().replace(/\s+/g, '_')}`
+            const haEntity = c.device
+              ? entityId('sensor', c.device)
               : 'sensor.your_sensor';
-            return `  - condition: numeric_state
-    entity_id: ${entityId}
-    ${c.operator === '<=' ? 'below' : 'above'}: ${c.value || 0}`;
+            return `      - condition: numeric_state
+        entity_id: ${haEntity}
+        ${c.operator === '<=' || c.operator === '<' ? 'below' : 'above'}: ${c.value || 0}`;
           }
-          return `  - condition: template
-    value_template: "{{ true }}"`;
+          return `      - condition: template
+        value_template: "{{ true }}"`;
         })
         .join('\n\n')
     : '';
@@ -68,35 +96,32 @@ export function renderHA(spec: AutomationSpec): string {
   const actionYaml = actions
     .map((a) => {
       if (a.type === 'turn_on') {
-        const entityId = a.target
-          ? `light.${a.target.toLowerCase().replace(/\s+/g, '_')}`
-          : 'light.your_light';
-        return `  - service: homeassistant.turn_on
-    target:
-      entity_id: ${entityId}`;
+        const target = actionTarget(a.target);
+        return `      - service: ${target.service}
+        target:
+          entity_id: ${target.entity}`;
       }
       if (a.type === 'turn_off') {
-        const entityId = a.target
-          ? `light.${a.target.toLowerCase().replace(/\s+/g, '_')}`
-          : 'light.your_light';
-        return `  - service: homeassistant.turn_off
-    target:
-      entity_id: ${entityId}`;
+        const target = actionTarget(a.target);
+        const service = target.service === 'cover.open_cover' ? 'cover.close_cover' : 'homeassistant.turn_off';
+        return `      - service: ${service}
+        target:
+          entity_id: ${target.entity}`;
       }
       if (a.type === 'delay') {
         const secs = Math.floor((a.duration || 5000) / 1000);
-        return `  - delay:
-      seconds: ${secs}`;
+        return `      - delay:
+          seconds: ${secs}`;
       }
       if (a.type === 'notify') {
-        return `  - service: notify.mobile_app
-    data:
-      title: "AutomationForge"
-      message: "${a.message || 'Automation triggered'}"`;
+        return `      - service: notify.mobile_app
+        data:
+          title: "AutomationForge"
+          message: "${a.message || 'Automation triggered'}"`;
       }
-      return `  - service: homeassistant.turn_on
-    target:
-      entity_id: switch.your_device`;
+      return `      - service: homeassistant.turn_on
+        target:
+          entity_id: switch.your_device`;
     })
     .join('\n\n');
 
@@ -133,4 +158,10 @@ ${conditionYaml}
     action:
 ${actionYaml || '      - service: homeassistant.turn_on\n        target:\n          entity_id: switch.your_device'}
 `;
+}
+
+function entityIdForTrigger(value: string): string {
+  if (value.toLowerCase().includes('presence')) return entityId('person', 'your_phone');
+  if (value.includes(':')) return entityId('binary_sensor', value);
+  return entityId('binary_sensor', value);
 }

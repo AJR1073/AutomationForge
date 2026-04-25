@@ -2,6 +2,7 @@ import { AutomationSpec, WizardInput, Device, Trigger, Condition, Action, Part, 
 
 const DEVICE_TYPE_MAP: Record<string, Partial<Device>> = {
   motion_sensor:      { type: 'motion_sensor', haEntityId: 'binary_sensor.motion' },
+  presence_sensor:    { type: 'sensor', haEntityId: 'person.your_phone' },
   temperature_sensor: { type: 'temperature_sensor', haEntityId: 'sensor.temperature' },
   relay:              { type: 'relay', haEntityId: 'switch.relay', shellyModel: 'Shelly 1/1PM' },
   light:              { type: 'light', haEntityId: 'light.main' },
@@ -16,6 +17,7 @@ const DEVICE_TYPE_MAP: Record<string, Partial<Device>> = {
 
 const DEVICE_PARTS: Record<string, Part> = {
   motion_sensor:      { name: 'PIR Motion Sensor', capabilityTag: 'motion_sensor', quantity: 1, required: true },
+  presence_sensor:    { name: 'Phone Presence / Geofence in Home Assistant', capabilityTag: 'controller', quantity: 1, required: true, notes: 'Use the Home Assistant mobile app person/device tracker as the arrival trigger' },
   temperature_sensor: { name: 'Temperature/Humidity Sensor', capabilityTag: 'temperature_sensor', quantity: 1, required: true },
   relay:              { name: 'Shelly 1 Relay Module', capabilityTag: 'relay', quantity: 1, required: true },
   light:              { name: 'Smart Bulb / Light Strip', capabilityTag: 'light', quantity: 1, required: true },
@@ -28,14 +30,37 @@ const DEVICE_PARTS: Record<string, Part> = {
   leak_sensor:        { name: 'Water Leak Sensor', capabilityTag: 'leak_sensor', quantity: 1, required: true },
 };
 
+function isGarageGoal(goal: string) {
+  return goal.includes('garage') || goal.includes('grauge') || goal.includes('garag');
+}
+
+function extractTemperatureThreshold(goal: string): { operator: '>' | '>=' | '<' | '<='; value: number } {
+  const g = goal.toLowerCase();
+
+  const match = g.match(/(-?\d+(?:\.\d+)?)\s*(?:°\s*[cf]|degrees?\s*[cf]?|c|f)?/);
+  const parsedValue = match ? Number(match[1]) : NaN;
+  const value = Number.isFinite(parsedValue) ? parsedValue : 25;
+
+  const lessThanIntent = /\b(below|under|less than|cooler than|drop below)\b/.test(g);
+  const strictlyIntent = /\b(exceeds|over|greater than|more than|above)\b/.test(g);
+
+  if (lessThanIntent) {
+    return { operator: strictlyIntent ? '<' : '<=', value };
+  }
+  return { operator: strictlyIntent ? '>' : '>=', value };
+}
+
 function inferTriggers(goal: string, deviceTypes: string[]): Trigger[] {
   const triggers: Trigger[] = [];
   const g = goal.toLowerCase();
 
+  if (deviceTypes.includes('presence_sensor') || /\b(come home|arrive|arrival|near home|get home|return home|driveway)\b/.test(g)) {
+    triggers.push({ type: 'state', device: 'Presence Sensor', event: 'home' });
+  }
   if (deviceTypes.includes('motion_sensor') || g.includes('motion')) {
     triggers.push({ type: 'state', device: 'Motion Sensor', event: 'on' });
   }
-  if (deviceTypes.includes('door_sensor') || g.includes('door') || g.includes('open')) {
+  if ((deviceTypes.includes('door_sensor') || g.includes('door') || g.includes('open')) && !isGarageGoal(g)) {
     triggers.push({ type: 'state', device: 'Door Sensor', event: 'on' });
   }
   if (deviceTypes.includes('button') || g.includes('button') || g.includes('press')) {
@@ -45,7 +70,13 @@ function inferTriggers(goal: string, deviceTypes: string[]): Trigger[] {
     triggers.push({ type: 'time', at: g.includes('morning') ? '07:00' : g.includes('night') ? '22:00' : '08:00' });
   }
   if (deviceTypes.includes('temperature_sensor') || g.includes('temp') || g.includes('heat') || g.includes('cool')) {
-    triggers.push({ type: 'numeric_state', device: 'Temperature Sensor', value: 25, operator: '>=' });
+    const threshold = extractTemperatureThreshold(g);
+    triggers.push({
+      type: 'numeric_state',
+      device: 'Temperature Sensor',
+      value: threshold.value,
+      operator: threshold.operator,
+    });
   }
   if (deviceTypes.includes('leak_sensor') || g.includes('leak') || g.includes('water')) {
     triggers.push({ type: 'state', device: 'Leak Sensor', event: 'on' });
@@ -86,6 +117,9 @@ function inferActions(goal: string, deviceTypes: string[]): Action[] {
   const actions: Action[] = [];
   const g = goal.toLowerCase();
 
+  if (isGarageGoal(g) || g.includes('gate')) {
+    actions.push({ type: g.includes('close') ? 'turn_off' : 'turn_on', target: g.includes('gate') ? 'Gate' : 'Garage Door' });
+  }
   if (deviceTypes.includes('light') || g.includes('light') || g.includes('lamp') || g.includes('illuminate')) {
     if (g.includes('off') || g.includes('turn off') || g.includes('dim')) {
       actions.push({ type: 'turn_off', target: 'Light' });
@@ -93,7 +127,7 @@ function inferActions(goal: string, deviceTypes: string[]): Action[] {
       actions.push({ type: 'turn_on', target: 'Light' });
     }
   }
-  if (deviceTypes.includes('relay') || g.includes('relay') || g.includes('switch')) {
+  if ((deviceTypes.includes('relay') || g.includes('relay') || g.includes('switch')) && !actions.some((a) => a.target === 'Garage Door' || a.target === 'Gate')) {
     actions.push({ type: 'turn_on', target: 'Relay' });
   }
   if (deviceTypes.includes('smart_plug') || g.includes('plug') || g.includes('appliance') || g.includes('device')) {
@@ -131,14 +165,18 @@ function inferSafetyNotes(deviceTypes: string[], goal: string): string[] {
   if (g.includes('pool') || g.includes('water')) {
     notes.push('Pool/water automations: use IP67 rated hardware. Keep electronics away from splash zones.');
   }
-  if (g.includes('garage') || g.includes('door')) {
+  if (isGarageGoal(g) || g.includes('door')) {
     notes.push('Garage door automation: always include a physical safety check. Do not activate if obstruction sensors are not working.');
+  }
+  if (/\b(come home|arrive|arrival|near home|get home|return home)\b/.test(g)) {
+    notes.push('Presence automations can false-trigger. Add safeguards such as only opening when the door is closed and someone is expected.');
   }
   return notes;
 }
 
 export function buildSpecFromWizard(input: WizardInput): AutomationSpec {
   const { goal, deviceTypes, constraints, platforms } = input;
+  const normalizedGoal = goal.replace(/\bgrauge\b/gi, 'garage');
 
   const devices: Device[] = deviceTypes.map((dt, i) => ({
     name: dt.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
@@ -160,17 +198,17 @@ export function buildSpecFromWizard(input: WizardInput): AutomationSpec {
   });
 
   return {
-    intent: goal,
+    intent: normalizedGoal,
     assumptions: [
       'Devices are powered and connected to the same local network',
       'Home Assistant or Shelly Gen2 firmware is up to date',
       constraints.length > 0 ? `Constraints: ${constraints.join(', ')}` : 'No special constraints specified',
     ].filter(Boolean),
     devices,
-    triggers: inferTriggers(goal, deviceTypes),
+    triggers: inferTriggers(normalizedGoal, deviceTypes),
     conditions: inferConditions(constraints),
-    actions: inferActions(goal, deviceTypes),
-    safetyNotes: inferSafetyNotes(deviceTypes, goal),
+    actions: inferActions(normalizedGoal, deviceTypes),
+    safetyNotes: inferSafetyNotes(deviceTypes, normalizedGoal),
     partsList,
     renderTargets: platforms as Platform[],
   };

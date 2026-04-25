@@ -50,7 +50,7 @@ export default function PlatformTabs({ tabs, defaultTab }: PlatformTabsProps) {
           <div className="glass-card p-6 prose prose-invert prose-sm max-w-none
             prose-headings:text-violet-300 prose-strong:text-white
             prose-a:text-violet-400 prose-code:text-emerald-300
-            prose-li:text-slate-300 prose-p:text-slate-300">
+            prose-li:text-slate-100 prose-p:text-slate-100">
             <div dangerouslySetInnerHTML={{ __html: markdownToHtml(current.content) }} />
           </div>
         ) : (
@@ -66,7 +66,14 @@ export default function PlatformTabs({ tabs, defaultTab }: PlatformTabsProps) {
 
 // Minimal markdown-to-HTML for explanation tab
 function markdownToHtml(md: string): string {
-  return md
+  const escaped = md
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+  return escaped
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')

@@ -1,32 +1,36 @@
 import { test, expect } from '@playwright/test';
 
+// All tests use MOCK_LLM=1 via env so they're deterministic — no real OpenAI calls.
+// Set in playwright.config.ts or via shell: MOCK_LLM=1 npx playwright test
+
 // ── /build happy path ─────────────────────────────────────────────────────────
 test('build page: enter goal and get platform output tabs', async ({ page }) => {
   await page.goto('/build');
 
-  // Fill in the goal
-  await page.fill('#goal-input', 'Turn on lights when motion is detected');
+  // Step 1: enter goal
+  await page.locator('#automation-goal').fill('Turn on lights when motion is detected');
 
-  // Proceed through wizard
-  await page.click('#next-step-btn');
+  // Advance through the wizard
+  await page.getByText('Next: Select Devices →').click();
+  await page.getByText('Next: Platforms →').click();
 
-  // Step 2: skip device selection, hit generate
-  const generateBtn = page.locator('#generate-btn, button:has-text("Generate"), button:has-text("Build")').first();
-  await generateBtn.click();
+  // Generate code
+  await page.locator('#generate-btn').click();
 
-  // Wait for output to appear (LLM can take up to 15s)
-  await page.waitForSelector('[data-testid="platform-tabs"], .platform-tabs, pre, code', {
-    timeout: 20000,
-  });
+  // Wait for outputs (MOCK_LLM returns instantly)
+  await page.waitForSelector('pre, code', { timeout: 15000 });
 
-  // Assert at least one of the platform outputs is visible
-  const hasShelly = await page.locator('text=Shelly').count();
-  const hasOutput = await page.locator('pre, code').count();
-  expect(hasShelly + hasOutput).toBeGreaterThan(0);
+  // Should have rendered code output
+  const codeBlocks = await page.locator('pre, code').count();
+  expect(codeBlocks).toBeGreaterThan(0);
+
+  // Should mention "Shelly" somewhere in tabs or output
+  const shellyText = await page.locator('text=Shelly').count();
+  expect(shellyText).toBeGreaterThan(0);
 });
 
 // ── /fix happy path ───────────────────────────────────────────────────────────
-test('fix page: broken HA YAML shows platform chip and fixed output', async ({ page }) => {
+test('fix page: broken HA YAML shows platform chip and before/after', async ({ page }) => {
   await page.goto('/fix');
 
   const brokenYaml = `automation:
@@ -39,41 +43,35 @@ test('fix page: broken HA YAML shows platform chip and fixed output', async ({ p
 \t  service: light.turn_on
 \t  entity_id: light.hallway`;
 
-  // Paste the broken code
   await page.fill('#fix-input', brokenYaml);
 
-  // Platform chip should appear (HA detected from "automation:" + "entity_id:")
-  await expect(page.locator('text=Home Assistant YAML')).toBeVisible({ timeout: 2000 });
+  // Platform chip should show "Home Assistant YAML"
+  await expect(page.getByText('Detected: Home Assistant YAML')).toBeVisible({ timeout: 3000 });
 
   // Submit
   await page.click('#fix-btn');
 
-  // Wait for fixed output
+  // Wait for result
   await page.waitForSelector('pre, code', { timeout: 10000 });
 
-  // Should show the "After" panel
-  const afterPanel = await page.locator('text=After').count();
-  expect(afterPanel).toBeGreaterThan(0);
-
-  // Fixed code should be visible
-  const codeBlocks = await page.locator('pre, code').count();
-  expect(codeBlocks).toBeGreaterThan(0);
+  // Should show After panel (code was changed: tabs → spaces)
+  const afterText = await page.locator('text=After').count();
+  expect(afterText).toBeGreaterThan(0);
 });
 
-// ── /fix: invalid JSON shows parse error ──────────────────────────────────────
-test('fix page: invalid JSON shows parse error', async ({ page }) => {
+// ── /fix: invalid JSON shows error ────────────────────────────────────────────
+test('fix page: invalid JSON shows parse errors', async ({ page }) => {
   await page.goto('/fix');
 
-  // Paste clearly broken Node-RED JSON
   await page.fill('#fix-input', '[{"id":"abc","type":"inject","wires":[');
 
-  // nodered detected (starts with [)
-  await expect(page.locator('text=Node-RED JSON')).toBeVisible({ timeout: 2000 });
+  // Detected as Node-RED
+  await expect(page.getByText('Detected: Node-RED JSON')).toBeVisible({ timeout: 3000 });
 
   await page.click('#fix-btn');
-  await page.waitForSelector('pre, code', { timeout: 10000 });
+  await page.waitForSelector('text=/error|issue/i', { timeout: 10000 });
 
   // Should show parse error
-  const errText = await page.locator('text=/parse|error|JSON/i').count();
-  expect(errText).toBeGreaterThan(0);
+  const hasError = await page.locator('text=/parse|JSON|error/i').count();
+  expect(hasError).toBeGreaterThan(0);
 });

@@ -1,23 +1,34 @@
-// AutomationForge — AutomationSpec JSON Schema + Runtime Validator
+// AutomationForge — AutomationSpec JSON Schema + AJV Runtime Validator
 
+import Ajv from 'ajv';
 import { AutomationSpec } from '../engine/types';
 
 /**
- * JSON Schema for OpenAI structured output.
- * Matches the canonical AutomationSpec shape used by all renderers.
+ * JSON Schema for AutomationSpec — used by both OpenAI structured output
+ * and AJV runtime validation. Covers nested fields, enums, and required keys.
  */
 export const AUTOMATION_SPEC_SCHEMA = {
   type: 'object' as const,
+  additionalProperties: false,
   properties: {
-    intent: { type: 'string', description: 'A clear, one-line description of what this automation does' },
-    assumptions: { type: 'array', items: { type: 'string' }, description: 'Assumptions about the environment (network, firmware, etc.)' },
+    intent: { type: 'string', minLength: 1 },
+    assumptions: { type: 'array', items: { type: 'string' } },
     devices: {
       type: 'array',
       items: {
         type: 'object',
+        additionalProperties: false,
         properties: {
-          name: { type: 'string' },
-          type: { type: 'string', description: 'Device type: motion_sensor, relay, temp_sensor, light, switch, smart_plug, dimmer, door_sensor, leak_sensor, smoke_detector, button, zigbee_coordinator' },
+          name: { type: 'string', minLength: 1 },
+          type: {
+            type: 'string',
+            enum: [
+              'motion_sensor', 'presence_sensor', 'relay', 'temp_sensor', 'temperature_sensor',
+              'light', 'switch', 'smart_plug', 'dimmer', 'door_sensor',
+              'leak_sensor', 'smoke_detector', 'button', 'zigbee_coordinator',
+              'power_monitor', 'controller', 'sensor',
+            ],
+          },
           location: { type: 'string' },
           shellyModel: { type: 'string' },
           haEntityId: { type: 'string' },
@@ -27,15 +38,20 @@ export const AUTOMATION_SPEC_SCHEMA = {
     },
     triggers: {
       type: 'array',
+      minItems: 1,
       items: {
         type: 'object',
+        additionalProperties: false,
         properties: {
-          type: { type: 'string', description: 'Trigger type: time, state, numeric_state, mqtt, webhook, power_threshold' },
+          type: {
+            type: 'string',
+            enum: ['time', 'state', 'numeric_state', 'mqtt', 'webhook', 'power_threshold', 'input'],
+          },
           device: { type: 'string' },
           event: { type: 'string' },
           at: { type: 'string' },
           value: {},
-          operator: { type: 'string' },
+          operator: { type: 'string', enum: ['<', '>', '<=', '>=', '==', '!='] },
         },
         required: ['type'],
       },
@@ -44,21 +60,30 @@ export const AUTOMATION_SPEC_SCHEMA = {
       type: 'array',
       items: {
         type: 'object',
+        additionalProperties: false,
         properties: {
-          type: { type: 'string', description: 'Condition type: time, state, numeric_state, template' },
+          type: {
+            type: 'string',
+            enum: ['time', 'state', 'numeric_state', 'template'],
+          },
           device: { type: 'string' },
           value: {},
-          operator: { type: 'string' },
+          operator: { type: 'string', enum: ['<', '>', '<=', '>=', '==', '!='] },
         },
         required: ['type'],
       },
     },
     actions: {
       type: 'array',
+      minItems: 1,
       items: {
         type: 'object',
+        additionalProperties: false,
         properties: {
-          type: { type: 'string', description: 'Action type: turn_on, turn_off, delay, notify, mqtt_publish, http_request' },
+          type: {
+            type: 'string',
+            enum: ['turn_on', 'turn_off', 'delay', 'notify', 'mqtt_publish', 'http_request', 'toggle'],
+          },
           target: { type: 'string' },
           value: {},
           duration: { type: 'number' },
@@ -72,10 +97,11 @@ export const AUTOMATION_SPEC_SCHEMA = {
       type: 'array',
       items: {
         type: 'object',
+        additionalProperties: false,
         properties: {
-          name: { type: 'string' },
-          capabilityTag: { type: 'string' },
-          quantity: { type: 'number' },
+          name: { type: 'string', minLength: 1 },
+          capabilityTag: { type: 'string', minLength: 1 },
+          quantity: { type: 'number', minimum: 1 },
           required: { type: 'boolean' },
           notes: { type: 'string' },
         },
@@ -87,70 +113,139 @@ export const AUTOMATION_SPEC_SCHEMA = {
       items: { type: 'string', enum: ['shelly', 'ha', 'nodered', 'esphome'] },
     },
   },
-  required: ['intent', 'assumptions', 'devices', 'triggers', 'conditions', 'actions', 'safetyNotes', 'partsList', 'renderTargets'],
+  required: [
+    'intent', 'assumptions', 'devices', 'triggers', 'conditions',
+    'actions', 'safetyNotes', 'partsList', 'renderTargets',
+  ],
 };
 
+// ── Compiled AJV validator ────────────────────────────────────────────────────
+const ajv = new Ajv({ allErrors: true, strict: false });
+const _validate = ajv.compile(AUTOMATION_SPEC_SCHEMA);
+
 /**
- * Runtime validation of an AutomationSpec object.
- * Checks required fields, types, and minimum structure.
+ * Deep runtime validation using AJV.
+ * Returns all errors — not just first — for retry feedback.
  */
 export function validateSpec(spec: unknown): { ok: boolean; errors: string[] } {
-  const errors: string[] = [];
+  const valid = _validate(spec);
+  if (valid) return { ok: true, errors: [] };
 
-  if (!spec || typeof spec !== 'object') {
-    return { ok: false, errors: ['Spec is not an object'] };
-  }
+  const errors = (_validate.errors || []).map((e) => {
+    const path = e.instancePath || '/';
+    return `${path}: ${e.message}${e.params ? ` (${JSON.stringify(e.params)})` : ''}`;
+  });
 
-  const s = spec as Record<string, unknown>;
-
-  // Required string fields
-  if (typeof s.intent !== 'string' || !s.intent) errors.push('Missing or empty "intent"');
-
-  // Required array fields
-  for (const field of ['assumptions', 'devices', 'triggers', 'actions', 'safetyNotes', 'partsList', 'renderTargets']) {
-    if (!Array.isArray(s[field])) errors.push(`"${field}" must be an array`);
-  }
-
-  // conditions is optional but must be array if present
-  if (s.conditions !== undefined && !Array.isArray(s.conditions)) {
-    errors.push('"conditions" must be an array');
-  }
-
-  // Validate triggers have type
-  if (Array.isArray(s.triggers)) {
-    (s.triggers as Array<Record<string, unknown>>).forEach((t, i) => {
-      if (!t.type) errors.push(`Trigger ${i} missing "type"`);
-    });
-  }
-
-  // Validate actions have type
-  if (Array.isArray(s.actions)) {
-    (s.actions as Array<Record<string, unknown>>).forEach((a, i) => {
-      if (!a.type) errors.push(`Action ${i} missing "type"`);
-    });
-  }
-
-  // Must have at least one trigger and one action
-  if (Array.isArray(s.triggers) && s.triggers.length === 0) errors.push('Spec must have at least one trigger');
-  if (Array.isArray(s.actions) && s.actions.length === 0) errors.push('Spec must have at least one action');
-
-  return { ok: errors.length === 0, errors };
+  return { ok: false, errors };
 }
 
 /**
- * Coerce a raw LLM response into a clean AutomationSpec,
- * filling missing optional fields with defaults.
+ * Coerce a raw LLM response into a clean AutomationSpec shape,
+ * filling missing optional fields with safe defaults.
  */
 export function coerceSpec(raw: Record<string, unknown>, platforms: string[]): AutomationSpec {
+  const asRecord = (value: unknown): Record<string, unknown> | null =>
+    value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+
+  const toStringArray = (value: unknown): string[] =>
+    Array.isArray(value) ? value.map((v) => String(v)).filter(Boolean) : [];
+
+  const devices: AutomationSpec['devices'] = Array.isArray(raw.devices)
+    ? raw.devices
+        .map((item) => {
+          const r = asRecord(item);
+          if (!r) return null;
+          return {
+            name: String(r.name || ''),
+            type: String(r.type || ''),
+            ...(r.location !== undefined ? { location: String(r.location) } : {}),
+            ...(r.shellyModel !== undefined ? { shellyModel: String(r.shellyModel) } : {}),
+            ...(r.haEntityId !== undefined ? { haEntityId: String(r.haEntityId) } : {}),
+          };
+        })
+        .filter((d): d is AutomationSpec['devices'][number] => Boolean(d && d.name && d.type))
+    : [];
+
+  const triggers: AutomationSpec['triggers'] = Array.isArray(raw.triggers)
+    ? raw.triggers
+        .map((item) => {
+          const r = asRecord(item);
+          if (!r) return null;
+          return {
+            type: String(r.type || ''),
+            ...(r.device !== undefined ? { device: String(r.device) } : {}),
+            ...(r.event !== undefined ? { event: String(r.event) } : {}),
+            ...(r.at !== undefined ? { at: String(r.at) } : {}),
+            ...(r.value !== undefined ? { value: r.value } : {}),
+            ...(r.operator !== undefined ? { operator: String(r.operator) as AutomationSpec['triggers'][number]['operator'] } : {}),
+          };
+        })
+        .filter((t): t is AutomationSpec['triggers'][number] => Boolean(t && t.type))
+    : [];
+
+  const conditions: AutomationSpec['conditions'] = Array.isArray(raw.conditions)
+    ? raw.conditions
+        .map((item) => {
+          const r = asRecord(item);
+          if (!r) return null;
+          return {
+            type: String(r.type || ''),
+            ...(r.device !== undefined ? { device: String(r.device) } : {}),
+            ...(r.value !== undefined ? { value: r.value } : {}),
+            ...(r.operator !== undefined ? { operator: String(r.operator) as AutomationSpec['conditions'][number]['operator'] } : {}),
+          };
+        })
+        .filter((c): c is AutomationSpec['conditions'][number] => Boolean(c && c.type))
+    : [];
+
+  const actions: AutomationSpec['actions'] = Array.isArray(raw.actions)
+    ? raw.actions
+        .map((item) => {
+          const r = asRecord(item);
+          if (!r) return null;
+          const durationNum = typeof r.duration === 'number' ? r.duration : Number(r.duration);
+          return {
+            type: String(r.type || ''),
+            ...(r.target !== undefined ? { target: String(r.target) } : {}),
+            ...(r.value !== undefined ? { value: r.value } : {}),
+            ...(Number.isFinite(durationNum) ? { duration: durationNum } : {}),
+            ...(r.message !== undefined ? { message: String(r.message) } : {}),
+          };
+        })
+        .filter((a): a is AutomationSpec['actions'][number] => Boolean(a && a.type))
+    : [];
+
+  const partsList: AutomationSpec['partsList'] = Array.isArray(raw.partsList)
+    ? raw.partsList
+        .map((item) => {
+          const r = asRecord(item);
+          if (!r) return null;
+          const quantityNum = typeof r.quantity === 'number' ? r.quantity : Number(r.quantity);
+          return {
+            name: String(r.name || ''),
+            capabilityTag: String(r.capabilityTag || ''),
+            quantity: Number.isFinite(quantityNum) ? Math.max(1, quantityNum) : 1,
+            required: Boolean(r.required),
+            ...(r.notes !== undefined ? { notes: String(r.notes) } : {}),
+          };
+        })
+        .filter((p): p is AutomationSpec['partsList'][number] => Boolean(p && p.name && p.capabilityTag))
+    : [];
+
+  const allowedRenderTargets = new Set(['shelly', 'ha', 'nodered', 'esphome']);
+  const renderTargets = (Array.isArray(raw.renderTargets) ? raw.renderTargets : platforms)
+    .filter((p): p is string => typeof p === 'string')
+    .filter((p) => allowedRenderTargets.has(p));
+
   return {
     intent: String(raw.intent || 'Automation'),
-    assumptions: Array.isArray(raw.assumptions) ? raw.assumptions.map(String) : [],
-    devices: Array.isArray(raw.devices) ? raw.devices as AutomationSpec['devices'] : [],
-    triggers: Array.isArray(raw.triggers) ? raw.triggers as AutomationSpec['triggers'] : [],
-    conditions: Array.isArray(raw.conditions) ? raw.conditions as AutomationSpec['conditions'] : [],
-    actions: Array.isArray(raw.actions) ? raw.actions as AutomationSpec['actions'] : [],
-    safetyNotes: Array.isArray(raw.safetyNotes) ? raw.safetyNotes.map(String) : [],
-    partsList: Array.isArray(raw.partsList) ? raw.partsList as AutomationSpec['partsList'] : [],
-    renderTargets: (Array.isArray(raw.renderTargets) ? raw.renderTargets : platforms) as AutomationSpec['renderTargets'],
+    assumptions: toStringArray(raw.assumptions),
+    devices,
+    triggers,
+    conditions,
+    actions,
+    safetyNotes: toStringArray(raw.safetyNotes),
+    partsList,
+    renderTargets: (renderTargets.length ? renderTargets : platforms) as AutomationSpec['renderTargets'],
   };
 }

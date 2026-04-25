@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'code is required' }, { status: 400 });
     }
 
-    const code = body.code.slice(0, 50000); // safety limit
+    const code = body.code.trim().slice(0, 50000); // safety limit
     const result = detectAndFix(code);
 
     // Add placeholder detection to the fixed output

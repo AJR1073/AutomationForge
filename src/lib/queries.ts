@@ -1,5 +1,14 @@
 import { db } from './db';
 
+function parseCapabilityTags(raw: string): string[] {
+  try {
+    const parsed = JSON.parse(raw || '[]');
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
 // ── Build Sheet Queries ───────────────────────────────────────────────────────
 
 export async function getBuildSheetBySlug(slug: string) {
@@ -115,26 +124,60 @@ export async function getAllCapabilityTags() {
 
 // Return one product per capability tag (best match for parts list enrichment)
 export async function getProductsForTags(tags: string[]) {
+  const cleanTags = [...new Set(
+    tags
+      .filter((tag): tag is string => typeof tag === 'string')
+      .map((tag) => tag.trim())
+      .filter(Boolean),
+  )].slice(0, 20);
+
+  if (cleanTags.length === 0) return {};
+
   const products = await db.product.findMany({
     where: { active: true },
     include: { affiliateLinks: true },
+    orderBy: { createdAt: 'asc' },
   });
+
+  const scored = products.map((product) => ({
+    product,
+    caps: parseCapabilityTags(product.capabilityTags),
+  }));
+
   const result: Record<string, { name: string; brand: string; asin: string; priceHint: string; affiliateUrl: string }> = {};
-  for (const tag of tags) {
-    const match = products.find((p) => {
-      const caps: string[] = JSON.parse(p.capabilityTags || '[]');
-      return caps.includes(tag);
+  const usedProductIds = new Set<string | number>();
+
+  // Match the scarcest tags first so unique items are less likely to collide.
+  const tagOrder = cleanTags
+    .map((tag, originalIndex) => ({
+      tag,
+      originalIndex,
+      candidates: scored
+        .filter((entry) => entry.caps.includes(tag))
+        .sort((a, b) => {
+          if (a.caps.length !== b.caps.length) return a.caps.length - b.caps.length;
+          return Number(Boolean(b.product.asin)) - Number(Boolean(a.product.asin));
+        }),
+    }))
+    .sort((a, b) => {
+      if (a.candidates.length !== b.candidates.length) return a.candidates.length - b.candidates.length;
+      return a.originalIndex - b.originalIndex;
     });
+
+  for (const { tag, candidates } of tagOrder) {
+    const match = candidates.find((entry) => !usedProductIds.has(entry.product.id)) || candidates[0];
     if (match) {
+      usedProductIds.add(match.product.id);
       result[tag] = {
-        name: match.name,
-        brand: match.brand,
-        asin: match.asin || '',
-        priceHint: match.priceHint || '',
-        affiliateUrl: match.affiliateLinks[0]?.url || '',
+        name: match.product.name,
+        brand: match.product.brand,
+        asin: match.product.asin || '',
+        priceHint: match.product.priceHint || '',
+        affiliateUrl: match.product.affiliateLinks[0]?.url || '',
       };
     }
   }
+
   return result;
 }
 
@@ -197,4 +240,3 @@ export async function getFeaturedHelpers(limit = 6) {
     orderBy: { createdAt: 'desc' },
   });
 }
-

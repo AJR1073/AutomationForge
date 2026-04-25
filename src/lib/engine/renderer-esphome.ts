@@ -45,10 +45,11 @@ binary_sensor:
       mode: INPUT_PULLUP
     name: "${intent} Motion"
     id: motion_sensor
-    device_class: motion
-    on_press:
-      then:
-        - logger.log: "Motion detected!"${hasRelay ? '\n        - switch.turn_on: main_relay' : ''}`);
+	    device_class: motion
+	    on_press:
+	      then:
+	        - logger.log: "Motion detected!"
+	        - script.execute: run_automation`);
   }
 
   if (hasRelay) {
@@ -82,8 +83,11 @@ binary_sensor:
     pin:
       number: GPIO14
       mode: INPUT_PULLUP
-    name: "${intent} Input"
-    id: main_input
+	    name: "${intent} Input"
+	    id: main_input
+	    on_press:
+	      then:
+	        - script.execute: run_automation
 
 switch:
   - platform: gpio
@@ -113,17 +117,23 @@ switch:
       if (a.type === 'turn_off') return `          - switch.turn_off: main_relay`;
       if (a.type === 'delay')
         return `          - delay: ${Math.floor((a.duration || 5000) / 1000)}s`;
+      if (a.type === 'notify') return `          - homeassistant.event:
+              event: automationforge_notification
+              data:
+                message: "${a.message || intent}"`;
       return `          - logger.log: "Action: ${a.type}"`;
     })
     .join('\n');
 
   const conditionCode =
     conditions.length > 0
-      ? `        condition:
-          - condition: lambda
-            lambda: |
-              // Conditions: ${conditions.map((c) => `${c.type} ${c.operator || ''} ${c.value || ''}`).join(', ')}
-              return true;
+      ? `          - if:
+              condition:
+                lambda: |
+                  // Conditions: ${conditions.map((c) => `${c.type} ${c.operator || ''} ${c.value || ''}`).join(', ')}
+                  return true;
+              then:
+${automationActions || '                - logger.log: "Automation triggered"'}
 `
       : '';
 
@@ -166,14 +176,20 @@ wifi:
 
 captive_portal:
 
-${sensorsBlock.join('\n\n')}
+	${sensorsBlock.join('\n\n')}
 
-# ── Automation ────────────────────────────────────────────────────────────────
-${
-  automationTriggers
-    ? `# Inline automation triggered by sensor events
-# (ESPHome handles simple automations in sensor/binary_sensor blocks above)
-# For complex automations, use Home Assistant's automation engine via the API.`
+	script:
+	  - id: run_automation
+	    mode: restart
+	    then:
+	${conditionCode || automationActions || '          - logger.log: "Automation triggered"'}
+
+	# ── Automation ────────────────────────────────────────────────────────────────
+	${
+	  automationTriggers
+	    ? `# Inline automation triggered by sensor events
+	# Sensor events call script.execute: run_automation above.
+	# For complex automations, use Home Assistant's automation engine via the API.`
     : ''
 }
 `;

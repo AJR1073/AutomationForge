@@ -8,6 +8,26 @@ import { WizardInput } from '@/lib/engine/types';
 import { generateAutomationSpec } from '@/lib/ai/spec-generator';
 import { validateOutput } from '@/lib/engine/validators';
 
+const PLATFORMS = ['shelly', 'ha', 'nodered', 'esphome'] as const;
+type Platform = typeof PLATFORMS[number];
+
+function cleanStringArray(value: unknown, limit: number, itemLimit = 80): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim().slice(0, itemLimit))
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function cleanPlatforms(value: unknown): Platform[] {
+  if (!Array.isArray(value)) return [...PLATFORMS];
+  const selected = value.filter((item): item is Platform =>
+    typeof item === 'string' && PLATFORMS.includes(item as Platform),
+  );
+  return selected.length ? [...new Set(selected)] : [...PLATFORMS];
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as WizardInput;
@@ -18,51 +38,58 @@ export async function POST(req: NextRequest) {
 
     const input: WizardInput = {
       goal: body.goal.trim().slice(0, 300),
-      deviceTypes: (body.deviceTypes || []).slice(0, 10),
-      constraints: (body.constraints || []).slice(0, 10),
-      platforms: body.platforms || ['shelly', 'ha', 'nodered', 'esphome'],
+      deviceTypes: cleanStringArray(body.deviceTypes, 10),
+      constraints: cleanStringArray(body.constraints, 10, 120),
+      platforms: cleanPlatforms(body.platforms),
     };
 
     // ── LLM-first spec generation ──────────────────────────────────────────
     // Fallback to heuristics ONLY if:
     //   (a) OPENAI_API_KEY is missing
-    //   (b) LLM output fails schema validation after 2 retries (handled inside generateAutomationSpec)
+    //   (b) LLM output fails AJV validation after 2 retries
     //   (c) LLM request errors or times out
     // The heuristic spec is never merged or patched with LLM output.
     let spec;
-    let source: 'llm' | 'heuristic' = 'llm';
+    let specSource: 'llm' | 'fallback' = 'llm';
+    let modelUsed: string | null = null;
+    let warning: string | null = null;
 
     try {
-      spec = await generateAutomationSpec({
+      const result = await generateAutomationSpec({
         goal: input.goal,
         deviceTypes: input.deviceTypes,
         constraints: input.constraints,
         selectedPlatforms: input.platforms,
       });
-      console.log('[/api/build] LLM spec generated successfully');
+      spec = result.spec;
+      modelUsed = result.modelUsed;
+      console.log(`[/api/build] LLM spec generated via ${modelUsed}`);
     } catch (llmErr: unknown) {
       const msg = llmErr instanceof Error ? llmErr.message : String(llmErr);
       const isMissingKey = msg.includes('OPENAI_API_KEY not configured');
-      console.log(`[/api/build] LLM failed (${isMissingKey ? 'no key' : msg.slice(0, 80)}), using heuristic fallback`);
+      console.log(`[/api/build] LLM failed (${isMissingKey ? 'no key' : msg.slice(0, 100)}), using heuristic fallback`);
       spec = buildSpecFromWizard(input);
-      source = 'heuristic';
+      specSource = 'fallback';
+      warning = isMissingKey
+        ? 'OPENAI_API_KEY not configured — using heuristic spec builder (less accurate).'
+        : `LLM generation failed: ${msg.slice(0, 120)}. Fell back to heuristic builder.`;
     }
 
     // ── Render outputs ─────────────────────────────────────────────────────
-    const outputs = {
+    const allOutputs = {
       shelly: renderShelly(spec),
       ha: renderHA(spec),
       nodered: renderNodeRed(spec),
       esphome: renderESPHome(spec),
     };
+    const outputs = Object.fromEntries(
+      input.platforms.map((platform) => [platform, allOutputs[platform]]),
+    );
 
     // ── Validate each output ───────────────────────────────────────────────
-    const validation = {
-      shelly: validateOutput('shelly', outputs.shelly),
-      ha: validateOutput('ha', outputs.ha),
-      nodered: validateOutput('nodered', outputs.nodered),
-      esphome: validateOutput('esphome', outputs.esphome),
-    };
+    const validation = Object.fromEntries(
+      input.platforms.map((platform) => [platform, validateOutput(platform, allOutputs[platform])]),
+    );
 
     const explanation = `
 ## How This Automation Works
@@ -88,11 +115,12 @@ ${spec.safetyNotes.length > 0 ? `**⚠️ Safety Notes:**\n${spec.safetyNotes.ma
       outputs,
       explanation,
       validation,
-      source,
+      specSource,
+      modelUsed,
+      ...(warning ? { warning } : {}),
     });
   } catch (err: unknown) {
     console.error('[/api/build]', err);
-    const msg = err instanceof Error ? err.message : 'Internal server error';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to generate automation' }, { status: 500 });
   }
 }

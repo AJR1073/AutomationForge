@@ -193,7 +193,7 @@ export default function FixPage() {
                     Before
                   </h3>
                   <div className="rounded-lg border border-red-500/10 bg-red-500/5 overflow-hidden">
-                    <CodeBlock code={result.original} platform={result.platform as 'shelly' | 'ha' | 'nodered' | 'esphome'} />
+                    <CodeBlock code={result.original} platform={result.platform as 'shelly' | 'ha' | 'nodered' | 'esphome'} copyId={`original-${result.platform}`} />
                   </div>
                 </div>
               )}
@@ -205,7 +205,7 @@ export default function FixPage() {
                   {codeChanged ? 'After' : 'Your Code (no changes needed)'}
                 </h3>
                 <div className={`rounded-lg border overflow-hidden ${codeChanged ? 'border-emerald-500/10 bg-emerald-500/5' : ''}`} style={!codeChanged ? { borderColor: 'var(--border-default)' } : {}}>
-                  <CodeBlock code={result.fixed} platform={result.platform as 'shelly' | 'ha' | 'nodered' | 'esphome'} />
+                  <CodeBlock code={result.fixed} platform={result.platform as 'shelly' | 'ha' | 'nodered' | 'esphome'} copyId={`fixed-${result.platform}`} />
                 </div>
               </div>
             </div>
@@ -216,7 +216,7 @@ export default function FixPage() {
                 <p className="text-red-400 font-semibold text-sm mb-2">Issues found</p>
                 <ul className="space-y-1">
                   {result.errors.map((e, i) => (
-                    <li key={i} className="text-red-300/80 text-sm flex items-start gap-2">
+                    <li key={i} className="text-red-200 text-sm flex items-start gap-2">
                       <span className="text-red-500 mt-0.5">•</span> {e}
                     </li>
                   ))}
@@ -231,7 +231,7 @@ export default function FixPage() {
                 <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>These placeholders need to be replaced with your actual values:</p>
                 <ul className="space-y-1">
                   {result.placeholders.map((p, i) => (
-                    <li key={i} className="text-amber-300/80 text-sm flex items-start gap-2">
+                    <li key={i} className="text-amber-200 text-sm flex items-start gap-2">
                       <span className="text-amber-500 mt-0.5">✏️</span> {p}
                     </li>
                   ))}
@@ -245,7 +245,7 @@ export default function FixPage() {
                 <p className="text-emerald-400 font-semibold text-sm mb-2">Changes made</p>
                 <ul className="space-y-1">
                   {result.changes.map((c, i) => (
-                    <li key={i} className="text-emerald-300/80 text-sm flex items-start gap-2">
+                    <li key={i} className="text-emerald-200 text-sm flex items-start gap-2">
                       <span className="text-emerald-500 mt-0.5">•</span> {c}
                     </li>
                   ))}

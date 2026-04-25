@@ -6,6 +6,7 @@ import BuyAllButton from '@/components/BuyAllButton';
 
 const DEVICE_OPTIONS = [
   { id: 'motion_sensor', label: 'Motion Sensor' },
+  { id: 'presence_sensor', label: 'Presence / Geofence' },
   { id: 'relay', label: 'Relay / Switch' },
   { id: 'light', label: 'Smart Light' },
   { id: 'temperature_sensor', label: 'Temp Sensor' },
@@ -36,22 +37,97 @@ const PLATFORM_OPTIONS = [
   { id: 'esphome', label: 'ESPHome', color: 'text-emerald-400' },
 ];
 
+const DEFAULT_DEVICE_IDS = ['relay'];
+
+function uniqueDeviceIds(ids: string[]) {
+  const validIds = new Set(DEVICE_OPTIONS.map((device) => device.id));
+  return [...new Set(ids.filter((id) => validIds.has(id)))];
+}
+
+function inferDeviceIds(goal: string): string[] {
+  const g = goal.toLowerCase();
+  const devices: string[] = [];
+
+  if (/\b(motion|movement|presence|occupancy|pir)\b/.test(g)) devices.push('motion_sensor');
+  if (/\b(come home|arrive|arrival|near home|get home|return home|driveway|geofence|presence)\b/.test(g)) devices.push('presence_sensor');
+  if (/\b(door|window|garage|open|left open|entry)\b/.test(g)) devices.push('door_sensor');
+  if (/\b(leak|water|flood|pipe|washer|washing machine|sump)\b/.test(g)) devices.push('leak_sensor');
+  if (/\b(smoke|fire|alarm|co detector|carbon monoxide)\b/.test(g)) devices.push('smoke_detector');
+  if (/\b(button|press|push|scene controller)\b/.test(g)) devices.push('button');
+  if (/\b(temp|temperature|hot|cold|heat|cool|fan|humidity|thermostat)\b/.test(g)) devices.push('temperature_sensor');
+  if (/\b(dim|dimmer|brightness|fade)\b/.test(g)) devices.push('dimmer');
+
+  if (/\b(light|lamp|porch|hallway|stair|led|bulb)\b/.test(g)) {
+    devices.push(g.includes('dim') ? 'dimmer' : 'light');
+  }
+
+  if (/\b(relay|switch|valve|lock|garage|grauge|garag|gate|pump|motor|siren|fan)\b/.test(g)) devices.push('relay');
+  if (/\b(plug|outlet|appliance|coffee|washer|washing machine|dryer|charger|ev|energy|power|watt)\b/.test(g)) devices.push('smart_plug');
+  if (/\b(zigbee|aqara|sonoff|tradfri|hue sensor)\b/.test(g)) devices.push('zigbee_coordinator');
+
+  if (devices.length === 0) devices.push(...DEFAULT_DEVICE_IDS);
+  return uniqueDeviceIds(devices);
+}
+
 interface BuildResult {
   spec: {
+    renderTargets: string[];
     partsList: Array<{ name: string; capabilityTag: string; quantity: number; required: boolean }>;
     safetyNotes: string[];
     actions: Array<{ type: string; target?: string }>;
     triggers: Array<{ type: string; device?: string; at?: string }>;
     assumptions: string[];
   };
-  outputs: { shelly: string; ha: string; nodered: string; esphome: string };
+  outputs: Partial<Record<'shelly' | 'ha' | 'nodered' | 'esphome', string>>;
   explanation: string;
+  specSource?: 'llm' | 'fallback';
+  modelUsed?: string | null;
+  warning?: string;
+}
+
+function buildSetupChecklist(partsList: Array<{ name: string; capabilityTag: string }>) {
+  const tags = new Set(partsList.map((part) => part.capabilityTag));
+  const names = partsList.map((part) => part.name.toLowerCase()).join(' ');
+  const hasMainsControl = tags.has('relay') || tags.has('switch') || tags.has('dimmer') || tags.has('smart_plug');
+  const hasPresence = names.includes('presence') || names.includes('geofence');
+
+  const steps: string[] = [
+    'Install and power the controller (Home Assistant host, Shelly, or ESP device) on your local network.',
+  ];
+
+  if (hasMainsControl) {
+    steps.push('Wire relay/switch components using the vendor wiring diagram. Turn off the breaker first and keep line-voltage and low-voltage wiring separated.');
+  }
+  if (tags.has('motion_sensor')) {
+    steps.push('Mount the motion sensor facing the target area, then verify state changes in Home Assistant or your device UI.');
+  }
+  if (tags.has('door_sensor')) {
+    steps.push('Mount the door contact and magnet with correct gap/alignment, then verify open/closed state updates.');
+  }
+  if (tags.has('temperature_sensor')) {
+    steps.push('Place the temperature sensor away from direct heat or sunlight, then confirm stable readings.');
+  }
+  if (tags.has('leak_sensor')) {
+    steps.push('Place leak sensors at the lowest risk points (under appliances or near shutoff valves) and test with a small water drop.');
+  }
+  if (tags.has('zigbee_coordinator')) {
+    steps.push('Start Zigbee pairing mode on the coordinator, pair each Zigbee device, and rename entities clearly before using automation.');
+  }
+  if (hasPresence) {
+    steps.push('Configure Home Assistant Companion App presence/geofence and verify the `person` state changes between `home` and `not_home`.');
+  }
+
+  steps.push('Paste the generated automation/config, reload automations, and run one manual test before enabling fully automatic control.');
+  steps.push('Run a safety test with someone present: verify stop/obstruction behavior and confirm fail-safe behavior after power/network interruptions.');
+
+  return steps;
 }
 
 export default function BuildPage() {
   const [step, setStep] = useState(1);
   const [goal, setGoal] = useState('');
   const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
+  const [recommendedDevices, setRecommendedDevices] = useState<string[]>([]);
   const [selectedConstraints, setSelectedConstraints] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(['shelly', 'ha', 'nodered', 'esphome']);
   const [loading, setLoading] = useState(false);
@@ -61,6 +137,21 @@ export default function BuildPage() {
 
   const toggleItem = (list: string[], setList: (v: string[]) => void, item: string) => {
     setList(list.includes(item) ? list.filter((x) => x !== item) : [...list, item]);
+  };
+
+  const advanceToDevices = () => {
+    if (!goal.trim()) {
+      setError('Please describe your goal first.');
+      return;
+    }
+
+    const inferred = inferDeviceIds(goal);
+    setRecommendedDevices(inferred);
+    if (selectedDevices.length === 0) {
+      setSelectedDevices(inferred);
+    }
+    setError('');
+    setStep(2);
   };
 
   const handleBuild = async () => {
@@ -100,14 +191,22 @@ export default function BuildPage() {
 
   const tabs = result
     ? [
-        { id: 'shelly', label: 'Shelly', platform: 'shelly' as const, content: result.outputs.shelly },
-        { id: 'ha', label: 'Home Assistant', platform: 'ha' as const, content: result.outputs.ha },
-        { id: 'nodered', label: 'Node-RED', platform: 'nodered' as const, content: result.outputs.nodered },
-        { id: 'esphome', label: 'ESPHome', platform: 'esphome' as const, content: result.outputs.esphome },
+        ...(['shelly', 'ha', 'nodered', 'esphome'] as const).flatMap((platform) => {
+          const content = result.outputs[platform];
+          if (!content) return [];
+          const label = PLATFORM_OPTIONS.find((option) => option.id === platform)?.label || platform;
+          return [{ id: platform, label, platform, content }];
+        }),
         { id: 'explanation', label: 'Explanation', content: result.explanation, isMarkdown: true },
         { id: 'buildsheet', label: 'Build Sheet', content: '', isMarkdown: true },
       ]
     : [];
+  const setupChecklist = result ? buildSetupChecklist(result.spec.partsList) : [];
+  const generationLabel = result
+    ? result.specSource === 'llm'
+      ? `Generated with LLM (${result.modelUsed || 'unknown model'})`
+      : 'Generated with fallback rules (LLM unavailable)'
+    : '';
 
   return (
     <div className="min-h-screen py-12 px-6">
@@ -149,6 +248,7 @@ export default function BuildPage() {
                   maxLength={300}
                 />
                 <p className="text-xs text-right" style={{ color: 'var(--text-muted)' }}>{goal.length}/300</p>
+                {error && <p className="text-red-400 text-sm">{error}</p>}
                 {/* Suggestions */}
                 <div>
                   <p className="text-xs mb-2" style={{ color: 'var(--text-muted)' }}>Quick starts:</p>
@@ -164,7 +264,7 @@ export default function BuildPage() {
                   </div>
                 </div>
                 <div className="flex justify-end mt-4">
-                  <button className="btn-primary" onClick={() => { if (goal.trim()) { setError(''); setStep(2); } else setError('Please describe your goal first.'); }}>
+                  <button className="btn-primary" onClick={advanceToDevices}>
                     Next: Select Devices →
                   </button>
                 </div>
@@ -175,18 +275,34 @@ export default function BuildPage() {
             {step === 2 && (
               <div className="animate-fade-in space-y-6">
                 <div>
-                  <label className="block font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Which devices are involved?</label>
+                  <div className="mb-3">
+                    <label className="block font-semibold" style={{ color: 'var(--text-primary)' }}>Which devices are involved?</label>
+                    {recommendedDevices.length > 0 && (
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                        Suggested from your goal. Adjust anything that does not match your setup.
+                      </p>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {DEVICE_OPTIONS.map((d) => (
-                      <button
-                        key={d.id}
-                        onClick={() => toggleItem(selectedDevices, setSelectedDevices, d.id)}
-                        className={`flex items-center gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all text-left ${selectedDevices.includes(d.id) ? 'bg-teal-500/10 border-teal-500/30 text-teal-600' : ''}`}
-                        style={!selectedDevices.includes(d.id) ? { background: 'var(--bg-surface-2)', borderColor: 'var(--border-default)', color: 'var(--text-secondary)' } : {}}
-                      >
-                        {d.label}
-                      </button>
-                    ))}
+                    {DEVICE_OPTIONS.map((d) => {
+                      const selected = selectedDevices.includes(d.id);
+                      const recommended = recommendedDevices.includes(d.id);
+                      return (
+                        <button
+                          key={d.id}
+                          onClick={() => toggleItem(selectedDevices, setSelectedDevices, d.id)}
+                          className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg border text-sm font-medium transition-all text-left ${selected ? 'bg-teal-500/10 border-teal-500/30 text-teal-600' : ''}`}
+                          style={!selected ? { background: 'var(--bg-surface-2)', borderColor: recommended ? 'var(--accent-border)' : 'var(--border-default)', color: 'var(--text-secondary)' } : {}}
+                        >
+                          <span>{d.label}</span>
+                          {recommended && (
+                            <span className="text-[10px] font-semibold uppercase" style={{ color: 'var(--accent)' }}>
+                              Suggested
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
                 <div>
@@ -266,11 +382,31 @@ export default function BuildPage() {
               <div>
                 <h2 className="font-bold text-xl" style={{ color: 'var(--text-primary)' }}>Your Automation Code</h2>
                 <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>&ldquo;{goal}&rdquo;</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{generationLabel}</p>
               </div>
-              <button className="btn-ghost" onClick={() => { setResult(null); setStep(1); }}>
+              <button
+                className="btn-ghost"
+                onClick={() => {
+                  setGoal('');
+                  setSelectedDevices([]);
+                  setRecommendedDevices([]);
+                  setSelectedConstraints([]);
+                  setSelectedPlatforms(['shelly', 'ha', 'nodered', 'esphome']);
+                  setProductMap({});
+                  setError('');
+                  setResult(null);
+                  setStep(1);
+                }}
+              >
                 ← Start Over
               </button>
             </div>
+
+            {result.warning && (
+              <div className="rounded-lg p-3 text-sm" style={{ border: '1px solid var(--accent-border)', background: 'var(--accent-muted)', color: 'var(--text-primary)' }}>
+                {result.warning}
+              </div>
+            )}
 
             {/* Code tabs */}
             <PlatformTabs tabs={tabs.filter((t) => t.id !== 'buildsheet')} />
@@ -279,10 +415,10 @@ export default function BuildPage() {
             <div className="rounded-xl p-6" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-surface)' }}>
               <h3 className="font-semibold text-base mb-4" style={{ color: 'var(--text-primary)' }}>Parts list</h3>
               {result.spec.safetyNotes.length > 0 && (
-                <div className="mb-4 p-4 rounded-lg bg-amber-500/5 border border-amber-500/10">
-                  <p className="text-amber-400 font-semibold text-sm mb-2">Safety notes</p>
-                  <ul className="text-amber-300/60 text-sm space-y-1">
-                    {result.spec.safetyNotes.map((n, i) => <li key={i}>· {n}</li>)}
+                <div className="mb-4 p-4 rounded-lg bg-amber-500/10 border border-amber-500/25">
+                  <p className="text-amber-300 font-semibold text-sm mb-2">Safety notes</p>
+                  <ul className="text-sm space-y-2 leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                    {result.spec.safetyNotes.map((n, i) => <li key={i}>• {n}</li>)}
                   </ul>
                 </div>
               )}
@@ -319,14 +455,35 @@ export default function BuildPage() {
                 })}
               </div>
 
+              {/* Setup checklist */}
+              <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-default)' }}>
+                <h4 className="font-semibold text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+                  Setup checklist
+                </h4>
+                <ol className="space-y-2 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  {setupChecklist.map((stepText, index) => (
+                    <li key={index}>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{index + 1}.</span> {stepText}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
               {/* Buy All on Amazon */}
               <BuyAllButton
                 products={result.spec.partsList
                   .map((part) => {
                     const product = productMap[part.capabilityTag];
-                    return product ? { name: product.name, asin: product.asin, priceHint: product.priceHint } : null;
+                    return product
+                      ? {
+                          name: product.name,
+                          asin: product.asin,
+                          priceHint: product.priceHint,
+                          quantity: Math.max(1, Number(part.quantity) || 1),
+                        }
+                      : null;
                   })
-                  .filter((p): p is { name: string; asin: string; priceHint: string } => p !== null)}
+                  .filter((p): p is { name: string; asin: string; priceHint: string; quantity: number } => p !== null)}
               />
 
               <p className="text-xs mt-4" style={{ color: 'var(--text-faint)' }}>

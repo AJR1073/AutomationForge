@@ -137,10 +137,10 @@ export default async function BuildSheetPage({ params }: { params: Promise<{ slu
 
           {/* Safety notes */}
           {parsedSpec?.safetyNotes && parsedSpec.safetyNotes.length > 0 && (
-            <div className="mb-8 p-4 rounded-lg bg-amber-500/5 border border-amber-500/10">
-              <p className="text-amber-400 font-semibold text-sm mb-2">Safety notes</p>
-              <ul className="space-y-1">
-                {parsedSpec.safetyNotes.map((n, i) => <li key={i} className="text-amber-300/60 text-sm">· {n}</li>)}
+            <div className="mb-8 p-4 rounded-lg bg-amber-500/10 border border-amber-500/25">
+              <p className="text-amber-300 font-semibold text-sm mb-2">Safety notes</p>
+              <ul className="space-y-2 text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                {parsedSpec.safetyNotes.map((n, i) => <li key={i}>• {n}</li>)}
               </ul>
             </div>
           )}

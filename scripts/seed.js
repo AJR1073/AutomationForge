@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // AutomationForge — Database Seed Script
+/* eslint-disable @typescript-eslint/no-require-imports */
 'use strict';
 
 const Database = require('better-sqlite3');

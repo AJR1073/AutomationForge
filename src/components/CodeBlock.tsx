@@ -7,6 +7,7 @@ interface CodeBlockProps {
   language?: string;
   platform?: string;
   filename?: string;
+  copyId?: string;
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
@@ -19,7 +20,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   json: 'text-orange-400',
 };
 
-export default function CodeBlock({ code, language = 'text', platform, filename }: CodeBlockProps) {
+export default function CodeBlock({ code, language = 'text', platform, filename, copyId }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
@@ -71,9 +72,9 @@ export default function CodeBlock({ code, language = 'text', platform, filename 
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 ${
             copied
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-              : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:text-slate-200'
+              : 'bg-white/5 text-slate-200 border border-white/10 hover:bg-white/10 hover:text-white'
           }`}
-          id={`copy-${platform || language}`}
+          id={`copy-${copyId || platform || language}`}
         >
           {copied ? (
             <>

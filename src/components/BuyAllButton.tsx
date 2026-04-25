@@ -5,34 +5,60 @@ interface BuyAllButtonProps {
     name: string;
     asin: string;
     priceHint?: string;
+    quantity?: number;
   }>;
   affiliateTag?: string;
 }
 
 export default function BuyAllButton({ products, affiliateTag = 'automforge20-20' }: BuyAllButtonProps) {
-  const productsWithAsin = products.filter((p) => p.asin);
+  const dedupedByAsin = new Map<string, { name: string; asin: string; priceHint?: string; quantity: number }>();
+  for (const product of products) {
+    const asin = (product.asin || '').trim();
+    if (!asin) continue;
+
+    const qty = typeof product.quantity === 'number' && Number.isFinite(product.quantity)
+      ? Math.max(1, Math.floor(product.quantity))
+      : 1;
+    const existing = dedupedByAsin.get(asin);
+    if (existing) {
+      existing.quantity += qty;
+    } else {
+      dedupedByAsin.set(asin, {
+        name: product.name,
+        asin,
+        priceHint: product.priceHint,
+        quantity: qty,
+      });
+    }
+  }
+
+  const productsWithAsin = [...dedupedByAsin.values()].slice(0, 20);
 
   if (productsWithAsin.length === 0) return null;
 
-  // Build Amazon search URL with key product terms + affiliate tag
-  // This always works — no ASIN validation issues, no empty carts
-  const searchTerms = productsWithAsin
-    .map((p) => p.name.split(/\s+/).slice(0, 3).join(' ')) // first 3 words of each name
-    .slice(0, 5) // top 5 products to keep query reasonable
-    .join(' ');
-  const searchUrl = `https://www.amazon.com/s?k=${encodeURIComponent(searchTerms)}&tag=${affiliateTag}`;
+  // Build a prefilled Amazon cart URL so users land on the exact selected parts.
+  const cartParams = new URLSearchParams();
+  productsWithAsin.forEach((product, index) => {
+    const slot = index + 1;
+    cartParams.set(`ASIN.${slot}`, product.asin);
+    cartParams.set(`Quantity.${slot}`, String(product.quantity));
+  });
+  cartParams.set('tag', affiliateTag);
+  const cartUrl = `https://www.amazon.com/gp/aws/cart/add.html?${cartParams.toString()}`;
 
   // Also build individual product links for the dropdown
   const productLinks = productsWithAsin.map((p) => ({
     name: p.name,
+    asin: p.asin,
     url: `https://www.amazon.com/dp/${p.asin}?tag=${affiliateTag}`,
-    searchUrl: `https://www.amazon.com/s?k=${encodeURIComponent(p.name)}&tag=${affiliateTag}`,
+    quantity: p.quantity,
   }));
 
   // Estimate total from price hints
   const totalEstimate = productsWithAsin.reduce((sum, p) => {
-    const match = p.priceHint?.match(/\$(\d+)/);
-    return sum + (match ? parseInt(match[1]) : 0);
+    const match = p.priceHint?.match(/(\d+(?:\.\d+)?)/);
+    const unitPrice = match ? Number(match[1]) : 0;
+    return sum + (unitPrice * p.quantity);
   }, 0);
 
   const handleClick = () => {
@@ -44,6 +70,7 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
         metadata: {
           count: productsWithAsin.length,
           asins: productsWithAsin.map((p) => p.asin),
+          quantities: productsWithAsin.map((p) => p.quantity),
         },
       }),
     }).catch(() => {});
@@ -51,9 +78,9 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
 
   return (
     <div className="space-y-2">
-      {/* Main Buy All button — opens Amazon search */}
+      {/* Main Buy All button — opens prefilled Amazon cart */}
       <a
-        href={searchUrl}
+        href={cartUrl}
         target="_blank"
         rel="noopener noreferrer nofollow"
         onClick={handleClick}
@@ -69,8 +96,8 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
             Shop all {productsWithAsin.length} parts on Amazon
           </p>
           <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            Find every component for this build
-            {totalEstimate > 0 && <span className="" style={{ color: "var(--text-muted)" }}> · ~${totalEstimate} est.</span>}
+            Open a prefilled cart with these exact components
+            {totalEstimate > 0 && <span className="" style={{ color: "var(--text-muted)" }}> · ~${Math.round(totalEstimate)} est.</span>}
           </p>
         </div>
         {/* Arrow */}
@@ -83,14 +110,14 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
       <div className="flex flex-wrap gap-1.5 px-1">
         {productLinks.map((p) => (
           <a
-            key={p.name}
-            href={p.searchUrl}
+            key={`${p.asin}-${p.name}`}
+            href={p.url}
             target="_blank"
             rel="noopener noreferrer nofollow"
             className="text-[11px] hover:text-teal-400 transition-colors px-2 py-0.5 rounded border/50 hover:border-teal-500/30"
-            title={`Find ${p.name} on Amazon`}
+            title={`Open ${p.name} on Amazon`}
           >
-            {p.name.split(/\s+/).slice(0, 3).join(' ')}
+            {p.name.split(/\s+/).slice(0, 3).join(' ')}{p.quantity > 1 ? ` x${p.quantity}` : ''}
           </a>
         ))}
       </div>

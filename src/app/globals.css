@@ -27,9 +27,9 @@
   --bg-elevated: #ffffff;
 
   --text-primary: #1a1a2e;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --text-faint: #cbd5e1;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-faint: #94a3b8;
   --text-inverse: #e4e4e7;
 
   --border-default: rgba(0, 0, 0, 0.08);
@@ -55,13 +55,13 @@
 
   --code-bg: #0c0c0f;
   --code-border: rgba(0, 0, 0, 0.1);
-  --code-text: #d4d4d8;
+  --code-text: #e4e4e7;
 
   --divider: rgba(0, 0, 0, 0.06);
 
   --ad-bg: rgba(0, 0, 0, 0.015);
   --ad-border: rgba(0, 0, 0, 0.08);
-  --ad-text: #cbd5e1;
+  --ad-text: #64748b;
 
   --badge-opacity: 0.12;
   --badge-border-opacity: 0.25;
@@ -74,15 +74,15 @@
   --bg-surface-3: #1c1c22;
   --bg-elevated: #141418;
 
-  --text-primary: #e4e4e7;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
-  --text-faint: #3f3f46;
+  --text-primary: #f4f4f5;
+  --text-secondary: #d4d4d8;
+  --text-muted: #b4b4bd;
+  --text-faint: #8f8f99;
   --text-inverse: #1a1a2e;
 
-  --border-default: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.16);
-  --border-strong: rgba(255, 255, 255, 0.12);
+  --border-default: rgba(255, 255, 255, 0.13);
+  --border-hover: rgba(255, 255, 255, 0.22);
+  --border-strong: rgba(255, 255, 255, 0.18);
 
   --accent: #2dd4bf;
   --accent-hover: #5eead4;
@@ -91,8 +91,8 @@
   --accent-border-hover: rgba(45, 212, 191, 0.5);
   --accent-glow: rgba(45, 212, 191, 0.1);
 
-  --hover-bg: rgba(255, 255, 255, 0.04);
-  --active-bg: rgba(255, 255, 255, 0.06);
+  --hover-bg: rgba(255, 255, 255, 0.07);
+  --active-bg: rgba(255, 255, 255, 0.1);
 
   --shadow-card: none;
   --shadow-card-hover: 0 4px 24px rgba(0, 0, 0, 0.3);
@@ -103,13 +103,13 @@
 
   --code-bg: #0c0c0f;
   --code-border: rgba(255, 255, 255, 0.06);
-  --code-text: #d4d4d8;
+  --code-text: #f1f5f9;
 
-  --divider: rgba(255, 255, 255, 0.04);
+  --divider: rgba(255, 255, 255, 0.1);
 
   --ad-bg: rgba(255, 255, 255, 0.015);
   --ad-border: rgba(255, 255, 255, 0.06);
-  --ad-text: #27272a;
+  --ad-text: #a1a1aa;
 
   --badge-opacity: 0.1;
   --badge-border-opacity: 0.2;
@@ -210,7 +210,7 @@ body {
   gap: 6px;
   padding: 8px 14px;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   border: none;
   border-radius: 6px;
   font-size: 0.8125rem;
@@ -221,7 +221,7 @@ body {
 
 .btn-ghost:hover {
   background: var(--hover-bg);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 /* ── Code Block (always dark) ─────────────────────────────────── */
@@ -273,13 +273,13 @@ body {
   cursor: pointer;
   border: none;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   transition: all 0.15s ease;
 }
 
 .tab-item:hover {
   background: var(--hover-bg);
-  color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .tab-item.active {
@@ -308,7 +308,7 @@ body {
 }
 
 .forge-input::placeholder {
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 /* ── Animations ───────────────────────────────────────────────── */
@@ -338,7 +338,7 @@ body {
 }
 
 .section-header p {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 0.95rem;
   max-width: 520px;
 }
