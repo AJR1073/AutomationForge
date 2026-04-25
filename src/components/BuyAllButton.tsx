@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 interface BuyAllButtonProps {
   products: Array<{
     name: string;
@@ -11,6 +13,8 @@ interface BuyAllButtonProps {
 }
 
 export default function BuyAllButton({ products, affiliateTag = 'automforge20-20' }: BuyAllButtonProps) {
+  const [expanded, setExpanded] = useState(false);
+
   const dedupedByAsin = new Map<string, { name: string; asin: string; priceHint?: string; quantity: number }>();
   for (const product of products) {
     const asin = (product.asin || '').trim();
@@ -36,21 +40,12 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
 
   if (productsWithAsin.length === 0) return null;
 
-  // Build a prefilled Amazon cart URL so users land on the exact selected parts.
-  const cartParams = new URLSearchParams();
-  productsWithAsin.forEach((product, index) => {
-    const slot = index + 1;
-    cartParams.set(`ASIN.${slot}`, product.asin);
-    cartParams.set(`Quantity.${slot}`, String(product.quantity));
-  });
-  cartParams.set('tag', affiliateTag);
-  const cartUrl = `https://www.amazon.com/gp/aws/cart/add.html?${cartParams.toString()}`;
-
-  // Also build individual product links for the dropdown
+  // Build individual product links
   const productLinks = productsWithAsin.map((p) => ({
     name: p.name,
     asin: p.asin,
     url: `https://www.amazon.com/dp/${p.asin}?tag=${affiliateTag}`,
+    priceHint: p.priceHint,
     quantity: p.quantity,
   }));
 
@@ -61,7 +56,18 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
     return sum + (unitPrice * p.quantity);
   }, 0);
 
-  const handleClick = () => {
+  const handleItemClick = (name: string, asin: string) => {
+    fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventType: 'affiliate_click',
+        metadata: { name, asin, source: 'buy_all_list' },
+      }),
+    }).catch(() => {});
+  };
+
+  const handleOpenAll = () => {
     fetch('/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -70,22 +76,24 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
         metadata: {
           count: productsWithAsin.length,
           asins: productsWithAsin.map((p) => p.asin),
-          quantities: productsWithAsin.map((p) => p.quantity),
         },
       }),
     }).catch(() => {});
+
+    // Open each product in a new tab (browsers may block some after the first)
+    for (const p of productLinks) {
+      window.open(p.url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   return (
-    <div className="space-y-2">
-      {/* Main Buy All button — opens prefilled Amazon cart */}
-      <a
-        href={cartUrl}
-        target="_blank"
-        rel="noopener noreferrer nofollow"
-        onClick={handleClick}
-        className="flex items-center gap-3 px-5 py-3 rounded-lg bg-teal-500/10 border border-teal-500/25 hover:bg-teal-500/15 hover:border-teal-500/40 transition-colors group"
+    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--accent-border)', background: 'var(--bg-surface)' }}>
+      {/* Header — click to expand */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center gap-3 px-5 py-3.5 text-left group"
         id="buy-all-amazon"
+        aria-expanded={expanded}
       >
         {/* Cart icon */}
         <svg className="w-5 h-5 text-teal-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -95,32 +103,71 @@ export default function BuyAllButton({ products, affiliateTag = 'automforge20-20
           <p className="text-teal-400 font-semibold text-sm group-hover:text-teal-300 transition-colors">
             Shop all {productsWithAsin.length} parts on Amazon
           </p>
-          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-            Open a prefilled cart with these exact components
-            {totalEstimate > 0 && <span className="" style={{ color: "var(--text-muted)" }}> · ~${Math.round(totalEstimate)} est.</span>}
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {expanded ? 'Click each part to open on Amazon' : 'Expand to see individual part links'}
+            {totalEstimate > 0 && <span> · ~${Math.round(totalEstimate)} est.</span>}
           </p>
         </div>
-        {/* Arrow */}
-        <svg className="w-4 h-4 group-hover:text-teal-400 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        {/* Chevron */}
+        <svg
+          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+          style={{ color: 'var(--text-muted)' }}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
-      </a>
+      </button>
 
-      {/* Individual product quick-links */}
-      <div className="flex flex-wrap gap-1.5 px-1">
-        {productLinks.map((p) => (
-          <a
-            key={`${p.asin}-${p.name}`}
-            href={p.url}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-            className="text-[11px] hover:text-teal-400 transition-colors px-2 py-0.5 rounded border/50 hover:border-teal-500/30"
-            title={`Open ${p.name} on Amazon`}
+      {/* Expanded parts list */}
+      {expanded && (
+        <div className="px-5 pb-4 space-y-1.5" style={{ borderTop: '1px solid var(--divider)' }}>
+          <div className="pt-3 space-y-1">
+            {productLinks.map((p) => (
+              <a
+                key={`${p.asin}-${p.name}`}
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                onClick={() => handleItemClick(p.name, p.asin)}
+                className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group/item"
+                style={{ background: 'transparent' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--bg-elevated)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                {/* Amazon icon */}
+                <span className="w-5 h-5 flex items-center justify-center rounded text-[10px] font-bold flex-shrink-0"
+                  style={{ background: 'var(--accent-border)', color: 'var(--accent)' }}>
+                  A
+                </span>
+                <span className="flex-1 text-sm truncate group-hover/item:text-teal-400 transition-colors" style={{ color: 'var(--text-primary)' }}>
+                  {p.name}{p.quantity > 1 ? ` ×${p.quantity}` : ''}
+                </span>
+                {p.priceHint && (
+                  <span className="text-xs font-medium flex-shrink-0" style={{ color: 'var(--accent)' }}>{p.priceHint}</span>
+                )}
+                <svg className="w-3.5 h-3.5 flex-shrink-0 opacity-50 group-hover/item:opacity-100 group-hover/item:text-teal-400 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            ))}
+          </div>
+
+          {/* Open all tabs button */}
+          <button
+            onClick={handleOpenAll}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-medium transition-colors mt-2"
+            style={{ background: 'var(--accent-bg)', color: 'var(--accent)', border: '1px solid var(--accent-border)' }}
           >
-            {p.name.split(/\s+/).slice(0, 3).join(' ')}{p.quantity > 1 ? ` x${p.quantity}` : ''}
-          </a>
-        ))}
-      </div>
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+            Open all {productsWithAsin.length} parts in new tabs
+          </button>
+        </div>
+      )}
     </div>
   );
 }
