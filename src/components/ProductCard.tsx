@@ -1,7 +1,5 @@
 'use client';
 
-import Image from 'next/image';
-
 interface ProductCardProps {
   name: string;
   brand: string;
@@ -44,11 +42,13 @@ export default function ProductCard({
         className="glass-card p-3 flex items-center gap-3 group"
         id={`product-inline-${name.toLowerCase().replace(/\s+/g, '-')}`}
       >
-        <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+        <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0" style={{ background: 'var(--bg-surface)' }}>
           {imageUrl ? (
-            <Image src={imageUrl} alt={name} width={48} height={48} className="object-contain p-0.5" />
+            <img src={imageUrl} alt={name} width={48} height={48} className="object-contain p-0.5" loading="lazy" />
           ) : (
-            <span className="text-lg" style={{ color: 'var(--text-muted)' }}>—</span>
+            <svg className="w-6 h-6" style={{ color: 'var(--text-faint)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
           )}
         </div>
         <div className="flex-1 min-w-0">
@@ -72,15 +72,18 @@ export default function ProductCard({
       {/* Product image */}
       <div className="relative w-full aspect-square flex items-center justify-center overflow-hidden p-4" style={{ background: 'var(--bg-surface)' }}>
         {imageUrl ? (
-          <Image
+          <img
             src={imageUrl}
             alt={name}
             width={200}
             height={200}
+            loading="lazy"
             className="object-contain w-full h-full group-hover:scale-[1.03] transition-transform duration-200"
           />
         ) : (
-          <div className="text-3xl font-light" style={{ color: 'var(--text-faint)' }}>—</div>
+          <svg className="w-12 h-12" style={{ color: 'var(--text-faint)' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
         )}
         {priceHint && (
           <span
