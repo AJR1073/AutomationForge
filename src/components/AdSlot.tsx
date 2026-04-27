@@ -23,7 +23,7 @@ const AD_FORMAT_MAP: Record<string, string> = {
 export default function AdSlot({ slot = 'default', format = 'horizontal', className = '' }: AdSlotProps) {
   const adRef = useRef<HTMLModElement>(null);
   const pushed = useRef(false);
-  const pubId = process.env.NEXT_PUBLIC_ADSENSE_PUB_ID;
+  const pubId = 'ca-pub-5616650637352559';
 
   useEffect(() => {
     if (!pubId || pushed.current) return;

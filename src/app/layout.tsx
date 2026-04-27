@@ -60,20 +60,16 @@ const orgJsonLd = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const adsensePubId = process.env.NEXT_PUBLIC_ADSENSE_PUB_ID;
-
   return (
     <html lang="en" className={inter.variable} suppressHydrationWarning>
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
-        {/* Google AdSense — loads only when pub ID is configured */}
-        {adsensePubId && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsensePubId}`}
-            crossOrigin="anonymous"
-          />
-        )}
+        {/* Google AdSense */}
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5616650637352559"
+          crossOrigin="anonymous"
+        />
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <ThemeProvider>
