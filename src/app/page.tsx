@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { getFeaturedBuildSheets, getAllCategories } from '@/lib/queries';
+import StatsCounter from '@/components/StatsCounter';
+import NewsletterCapture from '@/components/NewsletterCapture';
 
 const CATEGORY_META: Record<string, { label: string; desc: string }> = {
   Lighting:    { label: 'Lighting',     desc: 'Motion lights, schedules, dimmers' },
@@ -56,6 +58,9 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ── Stats Counter ── */}
+      <StatsCounter />
 
       <hr className="section-divider" />
 
@@ -157,6 +162,51 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      <hr className="section-divider" />
+
+      {/* ── Starter Kit Promo ── */}
+      <section className="py-16 px-6">
+        <div className="container mx-auto max-w-3xl">
+          <div className="glass-card overflow-hidden">
+            <div
+              className="p-8 md:p-10"
+              style={{
+                background: 'linear-gradient(135deg, var(--accent-muted) 0%, transparent 60%)',
+              }}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-2xl">🛒</span>
+                <span
+                  className="text-[0.65rem] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md"
+                  style={{ background: 'var(--accent-muted)', color: 'var(--accent)', border: '1px solid var(--accent-border)' }}
+                >
+                  New
+                </span>
+              </div>
+              <h2 className="text-xl font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
+                Smart Home Starter Kits
+              </h2>
+              <p className="text-sm mb-6 leading-relaxed max-w-md" style={{ color: 'var(--text-muted)' }}>
+                Not sure what hardware to buy? We&apos;ve curated 3 starter kits — Essential, Standard, and Advanced — with everything you need to start automating.
+              </p>
+              <Link href="/starter-kit" className="btn-primary" id="starter-kit-cta">
+                View starter kits
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr className="section-divider" />
+
+      {/* ── Newsletter ── */}
+      <section className="py-16 px-6">
+        <div className="container mx-auto max-w-2xl">
+          <NewsletterCapture source="homepage" />
+        </div>
+      </section>
 
       <hr className="section-divider" />
 

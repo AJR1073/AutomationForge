@@ -10,6 +10,7 @@ const navLinks = [
   { href: '/fix', label: 'Fix' },
   { href: '/scripts', label: 'Scripts' },
   { href: '/build-sheets', label: 'Build Sheets' },
+  { href: '/blog', label: 'Blog' },
 ];
 
 export default function Navbar() {

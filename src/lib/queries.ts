@@ -240,3 +240,101 @@ export async function getFeaturedHelpers(limit = 6) {
     orderBy: { createdAt: 'desc' },
   });
 }
+
+// ── Blog Queries ──────────────────────────────────────────────────────────────
+
+export async function getAllBlogPosts(limit = 50) {
+  return db.blogPost.findMany({
+    where: { status: 'published' },
+    take: limit,
+    orderBy: { publishedAt: 'desc' },
+  });
+}
+
+export async function getBlogPostBySlug(slug: string) {
+  return db.blogPost.findUnique({ where: { slug } });
+}
+
+export async function getBlogPostsByCategory(category: string, limit = 50) {
+  return db.blogPost.findMany({
+    where: { status: 'published', category },
+    take: limit,
+    orderBy: { publishedAt: 'desc' },
+  });
+}
+
+export async function getAllBlogSlugs() {
+  return db.blogPost.findMany({
+    where: { status: 'published' },
+    select: { slug: true, updatedAt: true },
+    orderBy: { publishedAt: 'desc' },
+  });
+}
+
+export async function getAllBlogCategories() {
+  const posts = await db.blogPost.findMany({
+    where: { status: 'published' },
+    select: { category: true },
+    distinct: ['category'],
+  });
+  return [...new Set(posts.map((p) => p.category))];
+}
+
+// ── Stats / Analytics Queries ─────────────────────────────────────────────────
+
+export async function getEventCounts() {
+  const [generated, copied, fixed] = await Promise.all([
+    db.event.count({ where: { eventType: 'generate_success' } }),
+    db.event.count({ where: { eventType: 'copy_code' } }),
+    db.event.count({ where: { eventType: 'fix_success' } }),
+  ]);
+  return { buildsGenerated: generated, codesCopied: copied, fixesApplied: fixed };
+}
+
+export async function getAffiliateStats(days = 30) {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const events = await db.event.findMany({
+    where: {
+      eventType: { in: ['outbound_click', 'affiliate_click', 'buy_all_click'] },
+      createdAt: { gte: since },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  const byProduct: Record<string, { clicks: number; lastClicked: Date }> = {};
+  let buyAllClicks = 0;
+
+  for (const event of events) {
+    if (event.eventType === 'buy_all_click') {
+      buyAllClicks++;
+      continue;
+    }
+    const meta = JSON.parse(event.metadataJson || '{}');
+    const name = (meta.name as string) || 'Unknown';
+    if (!byProduct[name]) {
+      byProduct[name] = { clicks: 0, lastClicked: event.createdAt };
+    }
+    byProduct[name].clicks++;
+  }
+
+  const topProducts = Object.entries(byProduct)
+    .map(([name, data]) => ({ name, ...data }))
+    .sort((a, b) => b.clicks - a.clicks)
+    .slice(0, 20);
+
+  return { topProducts, buyAllClicks, totalClicks: events.length, period: `${days}d` };
+}
+
+// ── Subscriber Queries ────────────────────────────────────────────────────────
+
+export async function addSubscriber(email: string, source = 'homepage') {
+  try {
+    return await db.subscriber.create({ data: { email, source } });
+  } catch {
+    // unique constraint — already subscribed
+    return null;
+  }
+}
+

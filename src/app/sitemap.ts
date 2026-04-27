@@ -1,12 +1,13 @@
-import { getAllBuildSheetSlugs, getAllCapabilityTags, getAllHelperSlugs } from '@/lib/queries';
+import { getAllBuildSheetSlugs, getAllCapabilityTags, getAllHelperSlugs, getAllBlogSlugs } from '@/lib/queries';
 import type { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://automationforge.vercel.app';
-  const [slugs, tags, helperSlugs] = await Promise.all([
+  const [slugs, tags, helperSlugs, blogSlugs] = await Promise.all([
     getAllBuildSheetSlugs(),
     getAllCapabilityTags(),
     getAllHelperSlugs(),
+    getAllBlogSlugs(),
   ]);
 
   const staticPages: MetadataRoute.Sitemap = [
@@ -15,6 +16,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/fix`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/scripts`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/build-sheets`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/starter-kit`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.7 },
   ];
 
   const buildSheetPages: MetadataRoute.Sitemap = slugs.map((s) => ({
@@ -38,6 +41,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.65,
   }));
 
-  return [...staticPages, ...buildSheetPages, ...productPages, ...helperPages];
-}
+  const blogPages: MetadataRoute.Sitemap = blogSlugs.map((b) => ({
+    url: `${baseUrl}/blog/${b.slug}`,
+    lastModified: b.updatedAt,
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+  }));
 
+  return [...staticPages, ...buildSheetPages, ...productPages, ...helperPages, ...blogPages];
+}

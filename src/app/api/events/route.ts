@@ -5,7 +5,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json() as { eventType: string; slug?: string; metadata?: Record<string, unknown> };
 
-    const allowed = ['copy_code', 'outbound_click', 'affiliate_click', 'buy_all_click', 'generate_success', 'fix_success'];
+    const allowed = ['copy_code', 'outbound_click', 'affiliate_click', 'buy_all_click', 'generate_success', 'fix_success', 'newsletter_signup'];
     if (!allowed.includes(body.eventType)) {
       return NextResponse.json({ error: 'Invalid event type' }, { status: 400 });
     }

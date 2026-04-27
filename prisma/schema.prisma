@@ -146,3 +146,36 @@ model HelperPage {
   @@index([category])
   @@index([status])
 }
+
+// ── Blog Posts (content marketing / SEO) ──────────────────────────────────────
+
+model BlogPost {
+  id             Int      @id @default(autoincrement())
+  slug           String   @unique
+  title          String
+  excerpt        String
+  contentHtml    String   // rendered HTML content
+  category       String   // "tutorial" | "comparison" | "guide" | "news"
+  tags           String   @default("[]") // JSON array string
+  seoTitle       String
+  seoDescription String
+  coverImage     String   @default("")
+  status         String   @default("published")
+  publishedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([category])
+  @@index([status])
+}
+
+// ── Newsletter Subscribers ────────────────────────────────────────────────────
+
+model Subscriber {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  source    String   @default("homepage") // homepage | footer | blog
+  createdAt DateTime @default(now())
+
+  @@index([source])
+}

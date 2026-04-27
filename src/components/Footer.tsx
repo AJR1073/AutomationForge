@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import NewsletterCapture from '@/components/NewsletterCapture';
 
 const footerLinks = {
   Tools: [
@@ -6,13 +7,13 @@ const footerLinks = {
     { href: '/fix', label: 'Fix My Code' },
     { href: '/scripts', label: 'Script Library' },
   ],
-  'Build Sheets': [
+  Content: [
     { href: '/build-sheets', label: 'All Build Sheets' },
+    { href: '/blog', label: 'Blog' },
+    { href: '/starter-kit', label: 'Starter Kit' },
     { href: '/build-sheets/motion-activated-lights', label: 'Motion Lights' },
-    { href: '/build-sheets/door-open-alert', label: 'Door Alert' },
-    { href: '/build-sheets/water-leak-shutoff', label: 'Leak Shutoff' },
   ],
-  Platforms: [
+  Products: [
     { href: '/products/relay', label: 'Relays' },
     { href: '/products/motion_sensor', label: 'Motion Sensors' },
     { href: '/products/smart_plug', label: 'Smart Plugs' },
@@ -25,7 +26,7 @@ export default function Footer() {
     <footer style={{ borderTop: '1px solid var(--border-default)' }} className="mt-20 py-12">
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
-          {/* Brand */}
+          {/* Brand + Newsletter */}
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div
@@ -43,6 +44,7 @@ export default function Footer() {
             <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
               Generate and fix home automation code for Shelly, Home Assistant, Node-RED, and ESPHome. Free forever.
             </p>
+            <NewsletterCapture source="footer" compact />
             <p className="text-xs mt-4" style={{ color: 'var(--text-faint)' }}>
               * Affiliate links help keep this site free. Prices and availability may vary.
             </p>
