@@ -64,6 +64,32 @@ export async function POST(req: NextRequest) {
       spec = result.spec;
       modelUsed = result.modelUsed;
       console.log(`[/api/build] LLM spec generated via ${modelUsed}`);
+
+      // Backfill partsList from user-selected device types if LLM left it empty
+      if (spec.partsList.length === 0 && input.deviceTypes.length > 0) {
+        const DEVICE_LABELS: Record<string, string> = {
+          motion_sensor: 'Motion Sensor',
+          presence_sensor: 'Presence Sensor',
+          relay: 'Relay / Switch',
+          light: 'Smart Light / Dimmer',
+          switch: 'Smart Switch',
+          smart_plug: 'Smart Plug',
+          dimmer: 'Dimmer',
+          door_sensor: 'Door / Window Sensor',
+          leak_sensor: 'Water Leak Sensor',
+          smoke_detector: 'Smoke Detector',
+          temperature_sensor: 'Temperature Sensor',
+          button: 'Push Button',
+          zigbee_coordinator: 'Zigbee Coordinator',
+        };
+        spec.partsList = input.deviceTypes.map((dt) => ({
+          name: DEVICE_LABELS[dt] || dt.replace(/_/g, ' '),
+          capabilityTag: dt,
+          quantity: 1,
+          required: true,
+        }));
+        console.log(`[/api/build] Backfilled partsList from deviceTypes: ${input.deviceTypes.join(', ')}`);
+      }
     } catch (llmErr: unknown) {
       const msg = llmErr instanceof Error ? llmErr.message : String(llmErr);
       const isMissingKey = msg.includes('OPENAI_API_KEY not configured');

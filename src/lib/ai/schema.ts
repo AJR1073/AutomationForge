@@ -215,7 +215,7 @@ export function coerceSpec(raw: Record<string, unknown>, platforms: string[]): A
         .filter((a): a is AutomationSpec['actions'][number] => Boolean(a && a.type))
     : [];
 
-  const partsList: AutomationSpec['partsList'] = Array.isArray(raw.partsList)
+  let partsList: AutomationSpec['partsList'] = Array.isArray(raw.partsList)
     ? raw.partsList
         .map((item) => {
           const r = asRecord(item);
@@ -231,6 +231,47 @@ export function coerceSpec(raw: Record<string, unknown>, platforms: string[]): A
         })
         .filter((p): p is AutomationSpec['partsList'][number] => Boolean(p && p.name && p.capabilityTag))
     : [];
+
+  // If LLM returned empty partsList, auto-populate from devices array
+  if (partsList.length === 0 && devices.length > 0) {
+    const DEVICE_TYPE_LABELS: Record<string, string> = {
+      motion_sensor: 'Motion Sensor',
+      presence_sensor: 'Presence Sensor',
+      relay: 'Relay / Switch',
+      light: 'Smart Light / Dimmer',
+      switch: 'Smart Switch',
+      smart_plug: 'Smart Plug',
+      dimmer: 'Dimmer',
+      door_sensor: 'Door / Window Sensor',
+      leak_sensor: 'Water Leak Sensor',
+      smoke_detector: 'Smoke Detector',
+      temperature_sensor: 'Temperature Sensor',
+      temp_sensor: 'Temperature Sensor',
+      button: 'Push Button',
+      zigbee_coordinator: 'Zigbee Coordinator',
+      power_monitor: 'Power Monitor',
+      controller: 'Controller (ESP32 / RPi)',
+      sensor: 'Sensor',
+    };
+    const seenTags = new Set<string>();
+    partsList = devices
+      .filter((d) => {
+        // Normalize temp_sensor → temperature_sensor for consistent tag matching
+        const tag = d.type === 'temp_sensor' ? 'temperature_sensor' : d.type;
+        if (seenTags.has(tag)) return false;
+        seenTags.add(tag);
+        return true;
+      })
+      .map((d) => {
+        const tag = d.type === 'temp_sensor' ? 'temperature_sensor' : d.type;
+        return {
+          name: DEVICE_TYPE_LABELS[d.type] || d.name || d.type,
+          capabilityTag: tag,
+          quantity: 1,
+          required: true,
+        };
+      });
+  }
 
   const allowedRenderTargets = new Set(['shelly', 'ha', 'nodered', 'esphome']);
   const renderTargets = (Array.isArray(raw.renderTargets) ? raw.renderTargets : platforms)
