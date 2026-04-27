@@ -76,6 +76,7 @@ export default function Footer() {
             © {new Date().getFullYear()} AutomationForge. Open to use, never requires an account.
           </p>
           <div className="flex items-center gap-4">
+            <Link href="/about" className="text-xs hover:underline" style={{ color: 'var(--text-faint)' }}>About</Link>
             <Link href="/disclaimer" className="text-xs hover:underline" style={{ color: 'var(--text-faint)' }}>Disclaimer</Link>
             <Link href="/privacy" className="text-xs hover:underline" style={{ color: 'var(--text-faint)' }}>Privacy Policy</Link>
           </div>
