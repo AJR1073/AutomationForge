@@ -75,9 +75,10 @@ export default function Footer() {
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
             © {new Date().getFullYear()} AutomationForge. Open to use, never requires an account.
           </p>
-          <p className="text-xs" style={{ color: 'var(--text-faint)' }}>
-            Safety disclaimers apply for mains wiring. We do not store your pasted code unless you save it.
-          </p>
+          <div className="flex items-center gap-4">
+            <Link href="/disclaimer" className="text-xs hover:underline" style={{ color: 'var(--text-faint)' }}>Disclaimer</Link>
+            <Link href="/privacy" className="text-xs hover:underline" style={{ color: 'var(--text-faint)' }}>Privacy Policy</Link>
+          </div>
         </div>
       </div>
     </footer>
