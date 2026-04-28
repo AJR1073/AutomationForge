@@ -33,18 +33,18 @@ export default function AboutPage() {
           <h2 className="text-xl font-semibold mb-3">What We Offer</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { icon: '⚡', title: 'Build Sheets', desc: '30+ tested automation blueprints with code for Shelly, HA, Node-RED, and ESPHome.' },
-              { icon: '🛠️', title: 'Code Generator', desc: 'Describe what you want to automate and get working code instantly.' },
-              { icon: '🔧', title: 'Fix My Code', desc: 'Paste broken automation code and get a fixed, working version back.' },
-              { icon: '📦', title: 'Parts Lists', desc: 'Every build sheet includes recommended hardware with direct Amazon links.' },
-              { icon: '📝', title: 'Blog & Guides', desc: 'Tutorials, comparisons, and best practices for smart home setups.' },
-              { icon: '🎓', title: 'Starter Kits', desc: 'Curated hardware bundles for beginners, intermediate, and advanced users.' },
+              { icon: '⚡', title: 'Build Sheets', desc: '30+ tested automation blueprints with code for Shelly, HA, Node-RED, and ESPHome.', href: '/build-sheets' },
+              { icon: '🛠️', title: 'Code Generator', desc: 'Describe what you want to automate and get working code instantly.', href: '/build' },
+              { icon: '🔧', title: 'Fix My Code', desc: 'Paste broken automation code and get a fixed, working version back.', href: '/fix' },
+              { icon: '📦', title: 'Parts Lists', desc: 'Every build sheet includes recommended hardware with direct Amazon links.', href: '/starter-kit' },
+              { icon: '📝', title: 'Blog & Guides', desc: 'Tutorials, comparisons, and best practices for smart home setups.', href: '/blog' },
+              { icon: '🎓', title: 'Starter Kits', desc: 'Curated hardware bundles for beginners, intermediate, and advanced users.', href: '/starter-kit' },
             ].map((item) => (
-              <div key={item.title} className="glass-card p-4">
+              <Link key={item.title} href={item.href} className="glass-card p-4 block transition-transform hover:scale-[1.02] hover:shadow-lg">
                 <span className="text-2xl">{item.icon}</span>
                 <h3 className="font-semibold mt-2 mb-1" style={{ color: 'var(--text-primary)' }}>{item.title}</h3>
                 <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{item.desc}</p>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
