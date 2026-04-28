@@ -181,40 +181,90 @@ export default async function BuildSheetPage({ params }: { params: Promise<{ slu
             </section>
           )}
 
-          {/* Assembly Guide */}
-          <section className="mb-12">
-            <h2 className="font-semibold text-xl mb-5">Assembly Guide</h2>
-            <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-surface)' }}>
-              <div className="rounded-xl overflow-hidden m-4" style={{ border: '1px solid var(--border-default)' }}>
-                <img
-                  src="/assembly-guide.png"
-                  alt="Home automation assembly guide — 4 steps: Power Off, Wire the Relay, Connect Sensor, Test and Deploy"
-                  className="w-full h-auto"
-                />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 px-4 pb-4">
-                {[
-                  { step: '1', title: 'Power Off', desc: 'Switch off the circuit breaker for the area you\'re working on. Use a non-contact voltage tester to verify the circuit is dead before touching any wires.', color: 'text-red-400' },
-                  { step: '2', title: 'Wire the Relay', desc: 'Connect L (live), N (neutral), and O (output) terminals on the Shelly or smart switch per the vendor wiring diagram. Keep mains and low-voltage wiring separated.', color: 'text-amber-400' },
-                  { step: '3', title: 'Connect Sensor', desc: 'Mount the motion, temperature, or door sensor in the target area. Pair it with your Zigbee coordinator or connect via Wi-Fi. Verify state changes in your dashboard.', color: 'text-cyan-400' },
-                  { step: '4', title: 'Test & Deploy', desc: 'Paste the generated code into your platform (see Deployment above), reload automations, and run one manual test before leaving it on fully automatic.', color: 'text-emerald-400' },
-                ].map((item) => (
-                  <div key={item.step} className="flex gap-3 p-3 rounded-lg" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-default)' }}>
-                    <span className={`flex-shrink-0 w-7 h-7 rounded-full bg-teal-500/20 flex items-center justify-center text-xs font-bold ${item.color}`}>
-                      {item.step}
-                    </span>
-                    <div>
-                      <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
-                      <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{item.desc}</p>
-                    </div>
+          {/* Assembly Guide — dynamic per build sheet */}
+          {parsedSpec && (() => {
+            const tags = new Set(parsedSpec.partsList.map((p) => p.capabilityTag));
+            const partNames = parsedSpec.partsList.map((p) => p.name);
+            const hasMains = tags.has('relay') || tags.has('switch') || tags.has('dimmer');
+            const hasPlug = tags.has('smart_plug');
+            const hasMotion = tags.has('motion_sensor');
+            const hasTemp = tags.has('temperature_sensor');
+            const hasDoor = tags.has('door_sensor');
+            const hasLeak = tags.has('leak_sensor');
+            const hasZigbee = tags.has('zigbee_coordinator');
+            const hasController = tags.has('controller');
+
+            const steps: Array<{ title: string; desc: string; color: string }> = [];
+
+            // Step 1 is always safety
+            if (hasMains) {
+              steps.push({ title: 'Disconnect Power', desc: 'Switch off the circuit breaker for the circuit you\'re working on. Use a non-contact voltage tester to verify it\'s dead before touching any wires.', color: 'text-red-400' });
+            } else {
+              steps.push({ title: 'Prepare Your Workspace', desc: 'Gather all hardware from the parts list below. Ensure your Wi-Fi network is stable and your home automation hub (if used) is online and reachable.', color: 'text-red-400' });
+            }
+
+            // Hardware-specific steps
+            if (hasMains) {
+              steps.push({ title: `Wire the ${tags.has('dimmer') ? 'Dimmer' : 'Relay'}`, desc: `Connect L (live), N (neutral),${tags.has('dimmer') ? ' and the dimmed output' : ' SW (switch input), and O (output)'} terminals on your ${partNames.find(n => /relay|switch|dimmer|shelly/i.test(n)) || 'smart switch'} per the vendor wiring diagram. Keep mains and low-voltage wiring separated.`, color: 'text-amber-400' });
+            }
+            if (hasPlug) {
+              steps.push({ title: 'Set Up Smart Plug', desc: `Plug in your ${partNames.find(n => /plug/i.test(n)) || 'smart plug'} and connect it to your Wi-Fi network using the manufacturer\'s app. Assign it a clear name (e.g., "Office Monitor Plug"). Verify it reports power readings in watts.`, color: 'text-amber-400' });
+            }
+            if (hasMotion) {
+              steps.push({ title: 'Mount Motion Sensor', desc: `Install your ${partNames.find(n => /motion|pir/i.test(n)) || 'motion sensor'} at the target location (typically 2–2.5m high, aimed at the detection zone). Pair it with your Zigbee coordinator or Wi-Fi network, then verify state changes (detected/clear) in your dashboard.`, color: 'text-cyan-400' });
+            }
+            if (hasTemp) {
+              steps.push({ title: 'Place Temperature Sensor', desc: `Position your ${partNames.find(n => /temp|dht|ds18/i.test(n)) || 'temperature sensor'} away from direct sunlight, heating vents, and exterior walls. If using ESPHome, flash the ESP32 with the generated config. Wait 2–3 minutes and confirm stable readings in your dashboard.`, color: 'text-cyan-400' });
+            }
+            if (hasDoor) {
+              steps.push({ title: 'Install Door/Window Sensor', desc: `Mount the ${partNames.find(n => /door|window|contact/i.test(n)) || 'contact sensor'} on the door frame with the magnet on the moving part. Ensure the gap is ≤15mm when closed. Pair it and verify it shows "open" and "closed" state changes correctly.`, color: 'text-cyan-400' });
+            }
+            if (hasLeak) {
+              steps.push({ title: 'Position Leak Sensor', desc: `Place your ${partNames.find(n => /leak|water/i.test(n)) || 'leak sensor'} at the lowest point near the appliance (under the washing machine, water heater, or sink). Test with a single drop of water to confirm it triggers an alert.`, color: 'text-cyan-400' });
+            }
+            if (hasZigbee) {
+              steps.push({ title: 'Configure Zigbee Coordinator', desc: `Plug in your ${partNames.find(n => /zigbee|dongle|coordinator/i.test(n)) || 'Zigbee coordinator'} and add it to Home Assistant via Settings → Integrations → Zigbee (ZHA or Zigbee2MQTT). Put each sensor into pairing mode and add them one at a time. Rename entities clearly.`, color: 'text-purple-400' });
+            }
+            if (hasController) {
+              steps.push({ title: 'Set Up Controller', desc: `Flash your ${partNames.find(n => /esp32|rpi|raspberry/i.test(n)) || 'controller'} with the generated firmware/config. Connect it to your network and verify it appears in your dashboard with correct entity names.`, color: 'text-purple-400' });
+            }
+
+            // Final step is always test & deploy
+            steps.push({ title: 'Test & Deploy', desc: `Paste the generated code into your platform (see Deployment section above), reload automations, and trigger one manual test. Verify the full cycle works: ${parsedSpec.triggers[0]?.type === 'state' ? 'trigger the sensor' : parsedSpec.triggers[0]?.type === 'time' ? 'wait for the scheduled time' : 'activate the trigger'} → confirm the ${parsedSpec.actions[0]?.type?.replace(/_/g, ' ') || 'action'} fires correctly.`, color: 'text-emerald-400' });
+
+            return (
+              <section className="mb-12">
+                <h2 className="font-semibold text-xl mb-5">Assembly Guide</h2>
+                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid var(--border-default)', background: 'var(--bg-surface)' }}>
+                  <div className="rounded-xl overflow-hidden m-4" style={{ border: '1px solid var(--border-default)' }}>
+                    <img
+                      src="/assembly-guide.png"
+                      alt={`Assembly guide for ${page.title}`}
+                      className="w-full h-auto"
+                    />
                   </div>
-                ))}
-              </div>
-              <div className="mx-4 mb-4 p-2.5 rounded-lg text-xs text-center" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: 'var(--text-secondary)' }}>
-                ⚠️ Always disconnect mains power before wiring. If you&apos;re unsure about any step, consult a licensed electrician.
-              </div>
-            </div>
-          </section>
+                  <div className={`grid grid-cols-1 ${steps.length > 2 ? 'sm:grid-cols-2' : ''} gap-3 px-4 pb-4`}>
+                    {steps.map((item, i) => (
+                      <div key={i} className="flex gap-3 p-3 rounded-lg" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-default)' }}>
+                        <span className={`flex-shrink-0 w-7 h-7 rounded-full bg-teal-500/20 flex items-center justify-center text-xs font-bold ${item.color}`}>
+                          {i + 1}
+                        </span>
+                        <div>
+                          <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
+                          <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{item.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {hasMains && (
+                    <div className="mx-4 mb-4 p-2.5 rounded-lg text-xs text-center" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: 'var(--text-secondary)' }}>
+                      ⚠️ This project involves mains voltage wiring. Always disconnect power before working. If unsure, consult a licensed electrician.
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+          })()}
 
           {/* Parts List & Recommended Products */}
           <section className="mb-12">
