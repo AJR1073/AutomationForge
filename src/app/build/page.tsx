@@ -469,6 +469,40 @@ export default function BuildPage() {
                 </ol>
               </div>
 
+              {/* Assembly Guide */}
+              <div className="rounded-xl p-5 mb-4" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border-default)' }}>
+                <h4 className="font-semibold text-sm mb-4" style={{ color: 'var(--text-primary)' }}>
+                  📋 Assembly Guide
+                </h4>
+                <div className="rounded-xl overflow-hidden mb-4" style={{ border: '1px solid var(--border-default)' }}>
+                  <img
+                    src="/assembly-guide.png"
+                    alt="Home automation assembly guide — 4 steps: Power Off, Wire the Relay, Connect Sensor, Test and Deploy"
+                    className="w-full h-auto"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { step: '1', title: 'Power Off', desc: 'Switch off the circuit breaker for the area you\'re working on. Use a non-contact voltage tester to confirm the circuit is dead.', color: 'text-red-400' },
+                    { step: '2', title: 'Wire the Relay', desc: 'Connect L (live), N (neutral), and O (output) terminals on the Shelly or smart switch. Follow the vendor wiring diagram — keep line and low voltage separated.', color: 'text-amber-400' },
+                    { step: '3', title: 'Connect Sensor', desc: 'Mount the motion/temp sensor in the target area. Pair it with your Zigbee coordinator or connect via Wi-Fi. Verify state changes in your dashboard.', color: 'text-cyan-400' },
+                    { step: '4', title: 'Test & Deploy', desc: 'Paste the generated code into your platform, reload automations, and trigger a manual test. Verify fail-safe behavior after power interruptions.', color: 'text-emerald-400' },
+                  ].map((item) => (
+                    <div key={item.step} className="flex gap-3 p-3 rounded-lg" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-default)' }}>
+                      <span className={`flex-shrink-0 w-7 h-7 rounded-full bg-teal-500/20 flex items-center justify-center text-xs font-bold ${item.color}`}>
+                        {item.step}
+                      </span>
+                      <div>
+                        <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{item.title}</p>
+                        <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 p-2 rounded-lg text-xs text-center" style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', color: 'var(--text-secondary)' }}>
+                  ⚠️ Always disconnect mains power before wiring. If unsure, consult a licensed electrician.
+                </div>
+              </div>
               {/* Buy All on Amazon */}
               <BuyAllButton
                 products={result.spec.partsList
