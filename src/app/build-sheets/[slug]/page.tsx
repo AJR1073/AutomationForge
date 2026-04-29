@@ -250,7 +250,9 @@ export default async function BuildSheetPage({ params }: { params: Promise<{ slu
               // Build-specific relay wiring context
               const relayContext = intentLower.includes('pet') || intentLower.includes('feeder')
                 ? `Wire your ${relayName} to the pet feeder's power supply. Connect the feeder's DC adapter through the relay's output terminals so the relay can switch the feeder on/off. If your feeder uses a low-voltage motor (5V/12V), wire the relay on the adapter's AC input side — never cut into the DC side.`
-                : intentLower.includes('irrigation') || intentLower.includes('garden') || intentLower.includes('water') && intentLower.includes('garden')
+                : intentLower.includes('valve') || intentLower.includes('shutoff') || (intentLower.includes('water') && intentLower.includes('leak'))
+                ? `Wire your ${relayName} to the motorized ball valve on your main water line. The relay's output (O) controls the valve's actuator — when triggered by the leak sensor, it closes the valve to stop water flow. Test the valve manually first to confirm open/close direction.`
+                : intentLower.includes('irrigation') || intentLower.includes('garden') || (intentLower.includes('water') && intentLower.includes('garden'))
                 ? `Wire your ${relayName} to the irrigation solenoid valve. Connect L (live) to the relay input and the solenoid's live wire to the switched output (O). The relay will open/close the valve on schedule. Use weatherproof enclosures for any outdoor wiring.`
                 : intentLower.includes('pool') || intentLower.includes('pump')
                 ? `Wire your ${relayName} inline with the pool pump's power circuit. Connect L (live in), N (neutral), and O (switched output to pump). The relay will control the pump's run schedule. Ensure the relay is rated for the pump's amperage — check the pump label.`
@@ -260,7 +262,7 @@ export default async function BuildSheetPage({ params }: { params: Promise<{ slu
                 ? `Wire your ${relayName} inline with the EV charger's power circuit. The relay will control when the charger receives power (off-peak hours only). Ensure the relay's amp rating matches the charger — most Level 2 chargers draw 30–40A, so you may need a contactor controlled by the Shelly.`
                 : intentLower.includes('fan') || intentLower.includes('ceiling')
                 ? `Wire your ${relayName} to the ceiling fan's power circuit. The relay goes in-line at the fan's junction box — L (live in) and O (output to fan). Keep the existing pull-chain as a backup. After wiring, restore power and confirm the fan responds to relay on/off.`
-                : intentLower.includes('hvac') || intentLower.includes('window') && intentLower.includes('hvac')
+                : intentLower.includes('hvac') || (intentLower.includes('window') && intentLower.includes('hvac'))
                 ? `Wire your ${relayName} to the HVAC system's control circuit — typically the 24V thermostat wire, not the high-voltage supply. The relay will interrupt the HVAC call-for-heat/cool signal. Consult your HVAC wiring diagram before cutting any wires.`
                 : intentLower.includes('smoke') || intentLower.includes('fire')
                 ? `Wire your ${relayName} to receive the smoke detector's dry-contact output on its SW (switch) input. When smoke is detected, the contact closes and the relay switches to trigger lights/alarms. The relay's output (O) connects to the light circuit.`
