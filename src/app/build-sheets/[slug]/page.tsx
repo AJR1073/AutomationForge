@@ -486,7 +486,7 @@ export default async function BuildSheetPage({ params }: { params: Promise<{ slu
             <div className="flex items-end justify-between mb-6">
               <div>
                 <h2 className=" font-semibold text-xl mb-1">Parts & products</h2>
-                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Everything you need — click any product to buy on Amazon.</p>
+                <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Pick one product per component — we show options for each part in your bill of materials.</p>
               </div>
             </div>
 
@@ -495,38 +495,76 @@ export default async function BuildSheetPage({ params }: { params: Promise<{ slu
               As an Amazon Associate, AutomationForge earns from qualifying purchases. Product links are affiliate links — they cost you nothing extra.
             </p>
 
-            {/* Product cards with images */}
-            {products.length > 0 && (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
-                  {products.slice(0, 8).map((product) => {
-                    const link = product.affiliateLinks[0];
-                    return (
-                      <ProductCard
-                        key={product.id}
-                        name={product.name}
-                        brand={product.brand}
-                        capabilityTags={JSON.parse(product.capabilityTags || '[]')}
-                        priceHint={product.priceHint || undefined}
-                        imageUrl={product.imageUrl || undefined}
-                        affiliateUrl={link?.url}
-                        network={link?.network}
-                      />
-                    );
-                  })}
-                </div>
+            {/* Product cards grouped by BOM item */}
+            {products.length > 0 && parsedSpec && (() => {
+              // Group products by their matching BOM capability tag
+              const bomGroups = parsedSpec.partsList.map((part) => {
+                const matching = products.filter((p) => {
+                  const caps: string[] = JSON.parse(p.capabilityTags || '[]');
+                  return caps.includes(part.capabilityTag);
+                });
+                return { part, products: matching };
+              }).filter((g) => g.products.length > 0);
 
-                <div className="mb-8">
-                  <BuyAllButton
-                    products={products.slice(0, 8).map((p) => ({
-                      name: p.name,
-                      asin: p.asin || '',
-                      priceHint: p.priceHint || undefined,
-                    }))}
-                  />
-                </div>
-              </>
-            )}
+              // For BuyAll, pick one product per BOM group (cheapest)
+              const buyAllProducts = bomGroups.map((g) => {
+                const sorted = [...g.products].sort((a, b) => {
+                  const priceA = parseFloat((a.priceHint || '$999').replace(/[^0-9.]/g, ''));
+                  const priceB = parseFloat((b.priceHint || '$999').replace(/[^0-9.]/g, ''));
+                  return priceA - priceB;
+                });
+                return sorted[0];
+              });
+
+              return (
+                <>
+                  {bomGroups.map((group, gi) => (
+                    <div key={gi} className="mb-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                          {group.part.name}
+                        </span>
+                        {group.products.length > 1 && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            choose one
+                          </span>
+                        )}
+                        <span className="text-xs" style={{ color: 'var(--text-faint)' }}>
+                          {group.part.required ? 'Required' : 'Optional'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {group.products.slice(0, 4).map((product) => {
+                          const link = product.affiliateLinks[0];
+                          return (
+                            <ProductCard
+                              key={product.id}
+                              name={product.name}
+                              brand={product.brand}
+                              capabilityTags={JSON.parse(product.capabilityTags || '[]')}
+                              priceHint={product.priceHint || undefined}
+                              imageUrl={product.imageUrl || undefined}
+                              affiliateUrl={link?.url}
+                              network={link?.network}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="mb-8">
+                    <BuyAllButton
+                      products={buyAllProducts.map((p) => ({
+                        name: p.name,
+                        asin: p.asin || '',
+                        priceHint: p.priceHint || undefined,
+                      }))}
+                    />
+                  </div>
+                </>
+              );
+            })()}
 
             {/* Parts checklist (from spec) */}
             {parsedSpec && parsedSpec.partsList.length > 0 && (

@@ -326,7 +326,7 @@ const PRODUCTS = [
   { name: 'Shelly 1 Gen3', brand: 'Shelly', tags: ['relay', 'switch'], price: '$12', image: '/products/shelly-relay.png', asin: 'B0CY7SWKC2', affiliate: 'https://www.amazon.com/dp/B0CY7SWKC2?tag=automforge20-20' },
   { name: 'Shelly Plug S Gen3', brand: 'Shelly', tags: ['smart_plug', 'energy_monitor'], price: '$18', image: '/products/smart-plug.png', asin: 'B0DK3GK96Y', affiliate: 'https://www.amazon.com/dp/B0DK3GK96Y?tag=automforge20-20' },
   { name: 'Shelly 1PM Plus', brand: 'Shelly', tags: ['relay', 'energy_monitor'], price: '$16', image: '/products/shelly-relay.png', asin: 'B0BKR3M5MB', affiliate: 'https://www.amazon.com/dp/B0BKR3M5MB?tag=automforge20-20' },
-  { name: 'Shelly Dimmer 2', brand: 'Shelly', tags: ['dimmer', 'light'], price: '$22', image: '/products/dimmer.png', asin: 'B08RP6N9S7', affiliate: 'https://www.amazon.com/dp/B08RP6N9S7?tag=automforge20-20' },
+  { name: 'Shelly Dimmer 2', brand: 'Shelly', tags: ['dimmer'], price: '$22', image: '/products/dimmer.png', asin: 'B08RP6N9S7', affiliate: 'https://www.amazon.com/dp/B08RP6N9S7?tag=automforge20-20' },
   { name: 'Aqara Motion Sensor P1', brand: 'Aqara', tags: ['motion_sensor', 'zigbee'], price: '$18', image: '/products/motion-sensor.png', asin: 'B09QKVMMTB', affiliate: 'https://www.amazon.com/dp/B09QKVMMTB?tag=automforge20-20' },
   { name: 'Sonoff ZBDONGLE-P Zigbee Coordinator', brand: 'Sonoff', tags: ['zigbee_coordinator'], price: '$20', image: '/products/zigbee-dongle.png', asin: 'B09KXTCMSC', affiliate: 'https://www.amazon.com/dp/B09KXTCMSC?tag=automforge20-20' },
   { name: 'ESP32 Development Board', brand: 'Espressif', tags: ['controller', 'esphome'], price: '$8', image: '/products/esp32.png', asin: 'B08D5ZD528', affiliate: 'https://www.amazon.com/dp/B08D5ZD528?tag=automforge20-20' },
@@ -340,6 +340,9 @@ const PRODUCTS = [
   { name: 'Zigbee Smart Plug (Ikea Tradfri)', brand: 'IKEA', tags: ['smart_plug', 'zigbee', 'energy_monitor'], price: '$12', image: '/products/smart-plug.png', asin: 'B09FX3876P', affiliate: 'https://www.amazon.com/dp/B09FX3876P?tag=automforge20-20' },
   { name: 'Aqara Wireless Mini Switch', brand: 'Aqara', tags: ['button', 'zigbee'], price: '$18', image: '/products/door-sensor.png', asin: 'B07D19YXND', affiliate: 'https://www.amazon.com/dp/B07D19YXND?tag=automforge20-20' },
   { name: 'Shelly Button1', brand: 'Shelly', tags: ['button', 'wifi'], price: '$14', image: '/products/shelly-relay.png', asin: 'B08BDGCKJN', affiliate: 'https://www.amazon.com/dp/B08BDGCKJN?tag=automforge20-20' },
+  { name: 'LIFX Mini White Smart Bulb', brand: 'LIFX', tags: ['light', 'wifi'], price: '$22', image: '/products/smart-plug.png', asin: 'B073168GYG', affiliate: 'https://www.amazon.com/dp/B073168GYG?tag=automforge20-20' },
+  { name: 'Philips Hue White A19', brand: 'Philips', tags: ['light', 'zigbee'], price: '$12', image: '/products/smart-plug.png', asin: 'B09RX1FVDJ', affiliate: 'https://www.amazon.com/dp/B09RX1FVDJ?tag=automforge20-20' },
+  { name: 'First Alert Z-Wave Smoke Detector', brand: 'First Alert', tags: ['smoke_detector', 'zwave'], price: '$35', image: '/products/door-sensor.png', asin: 'B00KMHXFAI', affiliate: 'https://www.amazon.com/dp/B00KMHXFAI?tag=automforge20-20' },
 ];
 
 async function main() {
