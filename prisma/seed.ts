@@ -338,6 +338,8 @@ const PRODUCTS = [
   { name: 'WLED LED Strip Controller', brand: 'WLED', tags: ['light', 'led_strip', 'esphome'], price: '$15', image: '/products/esp32.png', asin: 'B08D5ZD528', affiliate: 'https://www.amazon.com/dp/B08D5ZD528?tag=automforge20-20' },
   { name: 'PIR Motion Sensor HC-SR501', brand: 'Generic', tags: ['motion_sensor', 'pir'], price: '$3', image: '/products/motion-sensor.png', asin: 'B07KBWVJMP', affiliate: 'https://www.amazon.com/dp/B07KBWVJMP?tag=automforge20-20' },
   { name: 'Zigbee Smart Plug (Ikea Tradfri)', brand: 'IKEA', tags: ['smart_plug', 'zigbee', 'energy_monitor'], price: '$12', image: '/products/smart-plug.png', asin: 'B09FX3876P', affiliate: 'https://www.amazon.com/dp/B09FX3876P?tag=automforge20-20' },
+  { name: 'Aqara Wireless Mini Switch', brand: 'Aqara', tags: ['button', 'zigbee'], price: '$18', image: '/products/door-sensor.png', asin: 'B07D19YXND', affiliate: 'https://www.amazon.com/dp/B07D19YXND?tag=automforge20-20' },
+  { name: 'Shelly Button1', brand: 'Shelly', tags: ['button', 'wifi'], price: '$14', image: '/products/shelly-relay.png', asin: 'B08BDGCKJN', affiliate: 'https://www.amazon.com/dp/B08BDGCKJN?tag=automforge20-20' },
 ];
 
 async function main() {

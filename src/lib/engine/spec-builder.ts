@@ -189,13 +189,22 @@ export function buildSpecFromWizard(input: WizardInput): AutomationSpec {
     .map((dt) => DEVICE_PARTS[dt])
     .filter(Boolean);
 
-  partsList.push({
-    name: 'ESP32 or Shelly System',
-    capabilityTag: 'controller',
-    quantity: 1,
-    required: true,
-    notes: 'The automation brain — Shelly Gen2 for standalone, or ESP32 for ESPHome',
-  });
+  // Only add a standalone controller when the build needs one.
+  // Builds using only Shelly relays, smart plugs, dimmers, buttons, or
+  // door/leak sensors don't need a separate ESP32 — the Shelly IS the controller.
+  const needsController = deviceTypes.some((dt) =>
+    ['temperature_sensor', 'smoke_detector'].includes(dt)
+  );
+
+  if (needsController) {
+    partsList.push({
+      name: 'ESP32 Development Board',
+      capabilityTag: 'controller',
+      quantity: 1,
+      required: true,
+      notes: 'Required for ESPHome firmware or sensor integration — flash with the generated config',
+    });
+  }
 
   return {
     intent: normalizedGoal,
